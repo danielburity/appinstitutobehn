@@ -1,0 +1,14 @@
+[functions.pagarme-webhook]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/pagarme-webhook/index.ts"
+
+[functions.create-pagarme-subscription]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/create-pagarme-subscription/index.ts"
+
+[functions.create-pagarme-plan]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/create-pagarme-plan/index.ts"

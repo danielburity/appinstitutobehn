@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Instituto Behn Color System */
+    --background: 0 0% 97%;
+    --foreground: 234 97% 17%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 234 97% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 234 97% 17%;
+
+    --primary: 234 97% 17%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 283 100% 21%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 48%;
+
+    --accent: 253 39% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --accent-blue: 210 86% 61%;
+    --accent-red: 344 100% 31%;
+    --accent-pink: 323 100% 39%;
+
+    --destructive: 344 100% 31%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 253 39% 50%;
+
+    --radius: 0.75rem;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(234 97% 17%), hsl(283 100% 21%));
+    --gradient-accent: linear-gradient(135deg, hsl(253 39% 50%), hsl(210 86% 61%));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%));
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(234 97% 17% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(234 97% 17% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(234 97% 17% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(234 97% 17% / 0.1);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 234 97% 17%;
+    --sidebar-primary: 234 97% 17%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 97%;
+    --sidebar-accent-foreground: 234 97% 17%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 253 39% 50%;
+  }
+
+  .dark {
+    --background: 0 0% 0%; /* Pure black */
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 330 88% 34%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 330 88% 25%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 330 88% 34%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 344 100% 31%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 330 88% 34%;
+
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 330 88% 34%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 330 88% 34%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(234 97% 17%), hsl(283 100% 21%));
+  }
+
+  .gradient-accent {
+    background: linear-gradient(135deg, hsl(253 39% 50%), hsl(210 86% 61%));
+  }
+
+  .shadow-elegant {
+    box-shadow: 0 10px 30px -10px hsl(234 97% 17% / 0.2);
+  }
+
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
