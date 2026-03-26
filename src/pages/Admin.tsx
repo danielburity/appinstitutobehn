@@ -535,6 +535,17 @@ export default function Admin() {
                     </div>
                  </CardContent>
                </Card>
+               <Card className="col-span-1 md:col-span-2">
+                 <CardContent className="pt-6 space-y-4">
+                    <h3 className="font-bold text-lg border-b pb-2">Cores dos Eventos</h3>
+                    <p className="text-sm text-foreground/80 mb-4">Personalize as cores específicas dos cards de eventos.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <ColorField label="Botão de Inscrição" hslValue={appearanceForm.eventButtonColor || appearanceForm.primaryColor} onChange={c => setAppearanceForm({...appearanceForm, eventButtonColor: c})} />
+                      <ColorField label="Badge Evento Online" hslValue={appearanceForm.eventBadgeOnlineColor || "210 100% 50%"} onChange={c => setAppearanceForm({...appearanceForm, eventBadgeOnlineColor: c})} />
+                      <ColorField label="Badge Evento Presencial" hslValue={appearanceForm.eventBadgePresencialColor || "210 40% 96%"} onChange={c => setAppearanceForm({...appearanceForm, eventBadgePresencialColor: c})} />
+                    </div>
+                 </CardContent>
+               </Card>
             </div>
           </TabsContent>
 

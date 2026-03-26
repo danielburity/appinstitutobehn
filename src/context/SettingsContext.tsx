@@ -14,6 +14,9 @@ export interface AppSettings {
   sidebarBackground?: string;
   sidebarText?: string;
   logoUrl?: string; // Optional custom logo to replace the brain icon
+  eventButtonColor?: string;
+  eventBadgeOnlineColor?: string;
+  eventBadgePresencialColor?: string;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -28,7 +31,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   appBackground: "0 0% 97%",
   sidebarBackground: "234 97% 17%",
   sidebarText: "0 0% 100%",
-  logoUrl: ""
+  logoUrl: "",
+  eventButtonColor: "234 97% 17%",
+  eventBadgeOnlineColor: "210 100% 50%",
+  eventBadgePresencialColor: "210 40% 96%"
 };
 
 interface SettingsContextType {
@@ -133,6 +139,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       // Assuming a slight variation for the gradient-accent
       root.style.setProperty('--gradient-accent', `linear-gradient(135deg, hsl(${opts.accentColor}), hsl(210 86% 61%))`);
     }
+
+    // Event colors
+    if (opts.eventButtonColor) root.style.setProperty('--event-button', opts.eventButtonColor);
+    else if (opts.primaryColor) root.style.setProperty('--event-button', opts.primaryColor);
+
+    if (opts.eventBadgeOnlineColor) root.style.setProperty('--event-badge-online', opts.eventBadgeOnlineColor);
+    if (opts.eventBadgePresencialColor) root.style.setProperty('--event-badge-presencial', opts.eventBadgePresencialColor);
   };
 
   return (

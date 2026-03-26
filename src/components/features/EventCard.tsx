@@ -29,7 +29,10 @@ export const EventCard = ({ event, variant = 'default' }: EventCardProps) => {
             alt={event.title}
             className="w-full h-full object-cover"
           />
-          <Badge className={`absolute top-3 right-3 ${event.type === 'online' ? 'bg-accent-blue' : 'bg-secondary'} text-white`}>
+          <Badge 
+            className={`absolute top-3 right-3 text-primary-foreground border-none`}
+            style={{ backgroundColor: event.type === 'online' ? 'hsl(var(--event-badge-online))' : 'hsl(var(--event-badge-presencial))' }}
+          >
             {event.type === 'online' ? 'Online' : 'Presencial'}
           </Badge>
         </div>
@@ -52,7 +55,8 @@ export const EventCard = ({ event, variant = 'default' }: EventCardProps) => {
           <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
 
           <Button
-            className="w-full bg-primary text-white hover:opacity-90"
+            className="w-full text-white hover:opacity-90 border-none"
+            style={{ backgroundColor: 'hsl(var(--event-button))' }}
             onClick={() => event.external_url ? window.open(event.external_url, '_blank') : null}
           >
             {event.external_url ? 'Inscrição Externa' : 'Inscrever-se'}
@@ -75,7 +79,11 @@ export const EventCard = ({ event, variant = 'default' }: EventCardProps) => {
 
       <div className="flex-1 space-y-2">
         <div className="flex items-center gap-2">
-          <Badge variant={event.type === 'online' ? 'default' : 'secondary'} className="text-xs">
+          <Badge 
+            variant="outline" 
+            className="text-xs text-primary-foreground border-none"
+            style={{ backgroundColor: event.type === 'online' ? 'hsl(var(--event-badge-online))' : 'hsl(var(--event-badge-presencial))' }}
+          >
             {event.type === 'online' ? 'Online' : 'Presencial'}
           </Badge>
           <span className="text-xs text-muted-foreground">{event.category}</span>
