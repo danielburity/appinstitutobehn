@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Brain } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
@@ -27,12 +28,34 @@ import { useSettings } from "./context/SettingsContext";
 const queryClient = new QueryClient();
 
 const RootApp = () => {
-  const { loading } = useSettings();
+  const { loading, settings } = useSettings();
+  const [showLoadingDelay, setShowLoadingDelay] = useState(true);
+
+  useEffect(() => {
+    // Artificial 2.5s minimum delay for the loading animation setup
+    const timer = setTimeout(() => {
+      setShowLoadingDelay(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
   
-  if (loading) {
+  if (loading || showLoadingDelay) {
     return (
-      <div className="min-h-screen bg-[#10121f] flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-4 border-white/20 border-t-white animate-spin"></div>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent"></div>
+        <div className="z-10 flex flex-col items-center animate-in fade-in duration-1000">
+          {settings?.logoUrl ? (
+             <img src={settings.logoUrl} alt="Logo" className="w-[200px] max-w-[80vw] object-contain mb-8 animate-pulse" />
+          ) : (
+             <div className="w-24 h-24 mb-8 bg-white/5 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+               <Brain className="w-12 h-12 text-[#25D366] animate-pulse" />
+             </div>
+          )}
+          <div className="mt-4 flex flex-col items-center">
+            <div className="w-10 h-10 rounded-full border-4 border-white/10 border-t-white animate-spin"></div>
+            <p className="text-white/60 mt-4 text-sm font-medium tracking-wider uppercase animate-pulse">Carregando...</p>
+          </div>
+        </div>
       </div>
     );
   }

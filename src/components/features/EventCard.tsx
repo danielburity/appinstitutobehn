@@ -31,9 +31,9 @@ export const EventCard = ({ event, variant = 'default' }: EventCardProps) => {
           />
           <Badge 
             className={`absolute top-3 right-3 text-primary-foreground border-none`}
-            style={{ backgroundColor: event.type === 'online' ? 'hsl(var(--event-badge-online))' : 'hsl(var(--event-badge-presencial))' }}
+            style={{ backgroundColor: event.type?.toLowerCase() === 'online' ? 'hsl(var(--event-badge-online))' : 'hsl(var(--event-badge-presencial))' }}
           >
-            {event.type === 'online' ? 'Online' : 'Presencial'}
+            {event.type?.toLowerCase() === 'online' ? 'Online' : 'Presencial'}
           </Badge>
         </div>
 
@@ -82,9 +82,9 @@ export const EventCard = ({ event, variant = 'default' }: EventCardProps) => {
           <Badge 
             variant="outline" 
             className="text-xs text-primary-foreground border-none"
-            style={{ backgroundColor: event.type === 'online' ? 'hsl(var(--event-badge-online))' : 'hsl(var(--event-badge-presencial))' }}
+            style={{ backgroundColor: event.type?.toLowerCase() === 'online' ? 'hsl(var(--event-badge-online))' : 'hsl(var(--event-badge-presencial))' }}
           >
-            {event.type === 'online' ? 'Online' : 'Presencial'}
+            {event.type?.toLowerCase() === 'online' ? 'Online' : 'Presencial'}
           </Badge>
           <span className="text-xs text-muted-foreground">{event.category}</span>
         </div>

@@ -85,7 +85,7 @@ export default function Admin() {
     learning_outcomes: ''
   });
   const [therapistForm, setTherapistForm] = useState({ name: '', city: '', state: '', postal_code: '', specialties: '', selo_approved: false, gender: 'female', avatar_url: '', rating: '', contact_whatsapp: '' });
-  const [eventForm, setEventForm] = useState({ title: '', date: '', type: 'online', featured: false, external_url: '', image_url: '', description: '', category: '' });
+  const [eventForm, setEventForm] = useState({ title: '', date: '', type: 'online', featured: false, external_url: '', image_url: '', description: '', category: '', location: '' });
   const [materialForm, setMaterialForm] = useState({ title: '', description: '', image_url: '', external_url: '', price: '', category: '' });
 
   const [managingContentCourse, setManagingContentCourse] = useState<Course | null>(null);
@@ -195,7 +195,7 @@ export default function Admin() {
     else {
       toast.success('Evento criado!');
       loadData();
-      setEventForm({ title: '', date: '', type: 'online', featured: false, external_url: '', image_url: '', description: '', category: '' });
+      setEventForm({ title: '', date: '', type: 'online', featured: false, external_url: '', image_url: '', description: '', category: '', location: '' });
     }
   }
 
@@ -357,7 +357,8 @@ export default function Admin() {
       external_url: event.external_url || '',
       image_url: event.image_url || '',
       description: event.description || '',
-      category: event.category || ''
+      category: event.category || '',
+      location: event.location || ''
     });
     setEventEditDialogOpen(true);
   }
@@ -374,7 +375,8 @@ export default function Admin() {
       external_url: eventForm.external_url?.trim() || null,
       image_url: eventForm.image_url?.trim() || null,
       description: eventForm.description,
-      category: eventForm.category
+      category: eventForm.category,
+      location: eventForm.location
     };
 
     const { error } = await supabase
@@ -390,7 +392,7 @@ export default function Admin() {
       await loadData();
       setEventEditDialogOpen(false);
       setEditingEvent(null);
-      setEventForm({ title: '', date: '', type: 'online', featured: false, external_url: '', image_url: '', description: '', category: '' });
+      setEventForm({ title: '', date: '', type: 'online', featured: false, external_url: '', image_url: '', description: '', category: '', location: '' });
     }
   }
 
@@ -850,6 +852,7 @@ export default function Admin() {
                     <div className="space-y-2"><Label>Título</Label><Input value={eventForm.title} onChange={e => setEventForm({ ...eventForm, title: e.target.value })} /></div>
                     <div className="space-y-2"><Label>Data</Label><Input type="date" value={eventForm.date} onChange={e => setEventForm({ ...eventForm, date: e.target.value })} /></div>
                     <div className="space-y-2"><Label>Tipo</Label><Input value={eventForm.type} onChange={e => setEventForm({ ...eventForm, type: e.target.value })} placeholder="online ou presencial" /></div>
+                    <div className="space-y-2"><Label>Localização</Label><Input value={eventForm.location} onChange={e => setEventForm({ ...eventForm, location: e.target.value })} placeholder="Ex: São Paulo, SP ou Zoom" /></div>
                     <div className="space-y-2"><Label>Categoria</Label><Input value={eventForm.category} onChange={e => setEventForm({ ...eventForm, category: e.target.value })} placeholder="Ex: Workshop, Mentoria" /></div>
                     <ImageUpload
                       label="Imagem do Evento"
@@ -905,6 +908,7 @@ export default function Admin() {
                   <div className="space-y-2"><Label>Título</Label><Input value={eventForm.title} onChange={e => setEventForm({ ...eventForm, title: e.target.value })} /></div>
                   <div className="space-y-2"><Label>Data</Label><Input type="date" value={eventForm.date} onChange={e => setEventForm({ ...eventForm, date: e.target.value })} /></div>
                   <div className="space-y-2"><Label>Tipo</Label><Input value={eventForm.type} onChange={e => setEventForm({ ...eventForm, type: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>Localização</Label><Input value={eventForm.location} onChange={e => setEventForm({ ...eventForm, location: e.target.value })} /></div>
                   <div className="space-y-2"><Label>Categoria</Label><Input value={eventForm.category} onChange={e => setEventForm({ ...eventForm, category: e.target.value })} /></div>
                   <ImageUpload
                     label="Imagem do Evento"

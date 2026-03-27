@@ -106,7 +106,7 @@ const Home = () => {
       )}
 
       {/* CTA Terapeutas */}
-      <section className="gradient-accent rounded-2xl p-8 md:p-12 text-white">
+      <section className="bg-primary rounded-2xl p-8 md:p-12 text-primary-foreground">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">

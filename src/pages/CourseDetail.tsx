@@ -222,7 +222,7 @@ const CourseDetail = () => {
       {/* CTA Button */}
       {hasAccess ? (
         <Button
-          className="w-full md:w-auto gradient-primary text-white hover:opacity-90"
+          className="w-full md:w-auto bg-primary text-primary-foreground hover:bg-primary/90"
           size="lg"
           onClick={() => navigate(`/curso/${course.slug || course.id}/assistir`)}
         >
@@ -239,7 +239,7 @@ const CourseDetail = () => {
         </Button>
       ) : course.externalUrl ? (
         <Button
-          className="w-full md:w-auto gradient-primary text-white hover:opacity-90"
+          className="w-full md:w-auto bg-primary text-primary-foreground hover:bg-primary/90"
           size="lg"
           onClick={() => window.open(course.externalUrl, '_blank')}
         >

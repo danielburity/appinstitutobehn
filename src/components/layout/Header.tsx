@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, User, Brain, Sun, Moon } from "lucide-react";
+import { Bell, User, Brain, Sun, Moon, Menu, Home, BookOpen, Users, Calendar, Handshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
@@ -84,10 +84,37 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-40 bg-sidebar text-sidebar-foreground transition-colors duration-300">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between border-b border-sidebar-foreground/10">
-        <div className="flex items-center gap-3 md:hidden">
+        <div className="flex items-center gap-1 md:hidden">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="hover:bg-sidebar-foreground/10 text-sidebar-foreground -ml-2">
+                <Menu className="w-6 h-6" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-2 bg-card text-card-foreground border-border" align="start" sideOffset={8}>
+              <div className="flex flex-col gap-1">
+                <button onClick={() => navigate('/')} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm font-medium">
+                  <Home className="w-4 h-4"/> Home
+                </button>
+                <button onClick={() => navigate('/cursos')} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm font-medium">
+                  <BookOpen className="w-4 h-4"/> Cursos
+                </button>
+                <button onClick={() => navigate('/terapeutas')} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm font-medium">
+                  <Users className="w-4 h-4"/> Terapeutas
+                </button>
+                <button onClick={() => navigate('/eventos')} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm font-medium">
+                  <Calendar className="w-4 h-4"/> Eventos
+                </button>
+                <button onClick={() => navigate('/seja-parceiro')} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm font-medium">
+                  <Handshake className="w-4 h-4"/> Parceiro
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
           <button onClick={() => navigate('/')} className="hover:opacity-80 transition-opacity flex items-center gap-2">
             {settings.logoUrl ? (
-              <img src={settings.logoUrl} alt={`${settings.appName} Logo`} className="h-auto w-[160px] max-h-[48px] object-contain" />
+              <img src={settings.logoUrl} alt={`${settings.appName} Logo`} className="h-8 max-h-[48px] w-auto max-w-[200px] object-contain object-left" />
             ) : (
               <Brain className="w-6 h-6 text-[#25D366]" />
             )}
