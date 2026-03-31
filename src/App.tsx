@@ -13,7 +13,6 @@ import CourseDetail from "./pages/CourseDetail";
 import CoursePlayer from "./pages/CoursePlayer";
 import Therapists from "./pages/Therapists";
 import Events from "./pages/Events";
-import BecomeAffiliate from "./pages/BecomeAffiliate";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
 import { SettingsProvider } from "./context/SettingsContext";
@@ -47,8 +46,8 @@ const RootApp = () => {
           {settings?.logoUrl ? (
              <img src={settings.logoUrl} alt="Logo" className="w-[200px] max-w-[80vw] object-contain mb-8 animate-pulse" />
           ) : (
-             <div className="w-24 h-24 mb-8 bg-white/5 rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.1)]">
-               <Brain className="w-12 h-12 text-[#25D366] animate-pulse" />
+             <div className="w-24 h-24 mb-8 flex items-center justify-center">
+               <div className="w-16 h-16 rounded-full border-4 border-white/20 border-t-white animate-spin"></div>
              </div>
           )}
           <div className="mt-4 flex flex-col items-center">
@@ -80,7 +79,6 @@ const RootApp = () => {
                 <Route path="/curso/:courseId/assistir" element={<CoursePlayer />} />
                 <Route path="/terapeutas" element={<Therapists />} />
                 <Route path="/eventos" element={<Events />} />
-                <Route path="/seja-parceiro" element={<BecomeAffiliate />} />
                 <Route path="/perfil" element={<Profile />} />
                 <Route path="/admin" element={<ProtectedRoute requireAdmin>{<Admin />}</ProtectedRoute>} />
                 <Route path="*" element={<Home />} />

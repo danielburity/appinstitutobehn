@@ -73,6 +73,21 @@ export const VideoPlayer = ({ url, title, onEnded, onDurationDetected }: Props) 
             onDurationDetected(durationStr);
           }
         }
+        // Triggers auto-fullscreen on play
+        if (data.event === "play") {
+          const iframe = iframeRef.current;
+          if (iframe) {
+            const container = iframe.closest('.aspect-video') || iframe;
+            try {
+              if (container.requestFullscreen) {
+                container.requestFullscreen().catch(() => {});
+              } else if ((container as any).webkitRequestFullscreen) {
+                (container as any).webkitRequestFullscreen();
+              }
+            } catch (err) {}
+          }
+        }
+
       } catch (e) {
         // Ignore parsing errors from other messages
       }
@@ -143,7 +158,19 @@ export const VideoPlayer = ({ url, title, onEnded, onDurationDetected }: Props) 
           <div
             className="w-full h-[calc(100%-60px)] pointer-events-auto bg-transparent cursor-pointer"
             onContextMenu={(e) => e.preventDefault()}
-            onClick={() => {
+            onClick={(e) => {
+              // Tenta auto-tela cheia
+              const container = e.currentTarget.closest('.aspect-video');
+              if (container) {
+                try {
+                  if (container.requestFullscreen) {
+                    container.requestFullscreen().catch(() => {});
+                  } else if ((container as any).webkitRequestFullscreen) {
+                    (container as any).webkitRequestFullscreen();
+                  }
+                } catch (err) {}
+              }
+
               // Tenta alternar play/pause via postMessage
               if (iframeRef.current?.contentWindow) {
                 iframeRef.current.contentWindow.postMessage('{"method":"play"}', "*");

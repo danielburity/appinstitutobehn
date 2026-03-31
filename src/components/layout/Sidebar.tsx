@@ -15,7 +15,6 @@ export const Sidebar = () => {
     { icon: BookOpen, label: "Cursos", path: "/cursos" },
     { icon: Users, label: "Terapeutas", path: "/terapeutas" },
     { icon: Calendar, label: "Eventos", path: "/eventos" },
-    { icon: Handshake, label: "Seja um Parceiro", path: "/seja-parceiro" },
     { icon: User, label: "Meu Perfil", path: "/perfil" },
   ];
 

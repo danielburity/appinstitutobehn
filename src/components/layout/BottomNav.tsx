@@ -10,7 +10,6 @@ export const BottomNav = () => {
     { icon: BookOpen, label: "Cursos", path: "/cursos" },
     { icon: Users, label: "Terapeutas", path: "/terapeutas" },
     { icon: Calendar, label: "Eventos", path: "/eventos" },
-    { icon: Handshake, label: "Parceiro", path: "/seja-parceiro" },
   ];
 
   return (

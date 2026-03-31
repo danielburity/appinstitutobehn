@@ -147,8 +147,10 @@ const CourseDetail = () => {
         return <CheckCircle className="w-5 h-5 text-green-500" />;
       case "current":
         return <Play className="w-5 h-5 text-accent" />;
-      default:
+      case "locked":
         return <Lock className="w-5 h-5 text-muted-foreground" />;
+      default:
+        return <Play className="w-5 h-5 text-muted-foreground opacity-50" />;
     }
   };
 
@@ -269,7 +271,10 @@ const CourseDetail = () => {
 
         <TabsContent value="visao-geral" className="space-y-6 mt-6">
           <div className="bg-card rounded-xl p-6 border border-border space-y-4">
-            <h2 className="text-xl font-bold text-foreground">Sobre o Curso (Aula Atual: {selected?.titulo || "Visão Geral"})</h2>
+            <div className="flex flex-col gap-1">
+              <h2 className="text-xl font-bold text-foreground">Sobre o Curso:</h2>
+              <span className="text-lg font-medium text-muted-foreground">{selected?.titulo || "Visão Geral"}</span>
+            </div>
             <p className="text-muted-foreground leading-relaxed">
               {selected?.description || course.descricao}
             </p>
@@ -289,9 +294,9 @@ const CourseDetail = () => {
                       rel="noopener noreferrer"
                       className="flex items-center p-3 rounded-lg border bg-muted/50 hover:bg-muted transition-colors group"
                     >
-                      <FileText className="w-4 h-4 mr-3 text-muted-foreground group-hover:text-primary" />
-                      <span className="flex-1 truncate text-sm">{att.name}</span>
-                      <Download className="w-4 h-4 text-muted-foreground" />
+                      <FileText className="w-4 h-4 mr-3 flex-shrink-0 text-muted-foreground group-hover:text-primary" />
+                      <span className="flex-1 break-all text-sm">{att.name}</span>
+                      <Download className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
                     </a>
                   ))}
                 </div>
@@ -322,8 +327,8 @@ const CourseDetail = () => {
             <Accordion type="single" collapsible className="w-full">
               {course.modulos?.map((modulo: any, moduloIndex: number) => (
                 <AccordionItem key={moduloIndex} value={`modulo-${moduloIndex}`}>
-                  <AccordionTrigger className="px-6 hover:no-underline">
-                    <span className="font-bold text-foreground">{modulo.titulo}</span>
+                  <AccordionTrigger className="px-6 hover:no-underline text-left">
+                    <span className="font-bold text-foreground text-left flex-1 pr-4 leading-tight">{modulo.titulo}</span>
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="px-6 pb-4 space-y-2">
@@ -337,32 +342,25 @@ const CourseDetail = () => {
                           className={`flex items-center justify-between p-4 rounded-lg transition-smooth ${isLessonLocked
                             ? "bg-muted/50 cursor-not-allowed"
                             : "bg-muted hover:bg-muted/80 cursor-pointer"
-                            } ${selected?.titulo === aula.titulo ? 'border-primary border' : ''}`}
+                            }`}
                           onClick={() => {
                             if (!isLessonLocked) {
-                              setSelected({
-                                id: aula.id,
-                                titulo: aula.titulo,
-                                videoUrl: aula.videoUrl,
-                                description: aula.description,
-                                attachments: aula.attachments
-                              });
+                              navigate(`/curso/${course.slug || course.id}/assistir?lesson=${aula.id}`);
                             }
                           }}
                         >
-                          <div className="flex items-center gap-3">
-                            {getStatusIcon(displayStatus)}
+                          <div className="flex items-start gap-3 flex-1 min-w-0 pt-0.5">
+                            <div className="shrink-0 mt-0.5">{getStatusIcon(displayStatus)}</div>
                             <span
-                              className={
-                                isLessonLocked
+                              className={`text-left break-words ${isLessonLocked
                                   ? "text-muted-foreground"
-                                  : "text-foreground"
-                              }
+                                  : "text-foreground font-medium"
+                                }`}
                             >
                               {aula.titulo}
                             </span>
                           </div>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="text-sm text-muted-foreground ml-4 flex-shrink-0">
                             {aula.duracao}
                           </span>
                         </div>

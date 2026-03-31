@@ -76,7 +76,7 @@ const Profile = () => {
     };
 
     return (
-        <div className="max-w-2xl mx-auto py-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="max-w-2xl mx-auto pt-10 pb-32 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex flex-col items-center space-y-4">
                 <div className="relative group">
                     <Avatar className="w-32 h-32 border-4 border-accent shadow-2xl transition-transform duration-500 group-hover:scale-105">
@@ -147,8 +147,23 @@ const Profile = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                     Deseja alterar sua senha ou gerenciar acessos?
                 </p>
-                <Button variant="outline" className="w-full border-accent/20 hover:bg-accent/10 hover:text-accent transition-colors">
-                    Gerenciar Segurança
+                <Button 
+                    variant="outline" 
+                    className="w-full border-accent/20 hover:bg-accent/10 hover:text-accent transition-colors"
+                    onClick={async () => {
+                        if (user?.email) {
+                            const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+                              redirectTo: window.location.origin + '/login?type=recovery',
+                            });
+                            if (error) {
+                                toast.error('Erro ao enviar email de redefinição.');
+                            } else {
+                                toast.success('Email de redefinição de senha enviado!');
+                            }
+                        }
+                    }}
+                >
+                    Gerenciar Segurança (Alterar Senha)
                 </Button>
             </div>
 

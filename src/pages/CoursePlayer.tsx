@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { WelcomePopup } from '@/components/features/WelcomePopup';
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, FileText, Download, Check, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -128,24 +129,43 @@ export default function CoursePlayer() {
         });
         setProgress(progressMap);
 
-        // Find first incomplete lesson or first lesson
-        let firstLesson = null;
-        for (const module of mappedCourse.modulos) {
-            for (const aula of module.aulas) {
-                if (!progressMap[aula.id]) {
-                    firstLesson = aula;
-                    break;
+        const searchParams = new URLSearchParams(window.location.search);
+        const urlLessonId = searchParams.get('lesson');
+
+        let startLesson = null;
+
+        // Se houver ID pela URL, prioriza localizar esta aula em específico
+        if (urlLessonId) {
+            for (const module of mappedCourse.modulos) {
+                for (const aula of module.aulas) {
+                    if (aula.id === urlLessonId) {
+                        startLesson = aula;
+                        break;
+                    }
                 }
+                if (startLesson) break;
             }
-            if (firstLesson) break;
         }
 
-        // If all completed, start from first lesson
-        if (!firstLesson && mappedCourse.modulos[0]?.aulas[0]) {
-            firstLesson = mappedCourse.modulos[0].aulas[0];
+        // Caso contrário, busca a primeira incompleta
+        if (!startLesson) {
+            for (const module of mappedCourse.modulos) {
+                for (const aula of module.aulas) {
+                    if (!progressMap[aula.id]) {
+                        startLesson = aula;
+                        break;
+                    }
+                }
+                if (startLesson) break;
+            }
         }
 
-        setCurrentLesson(firstLesson);
+        // If all completed and no specific url target, start from first lesson
+        if (!startLesson && mappedCourse.modulos[0]?.aulas[0]) {
+            startLesson = mappedCourse.modulos[0].aulas[0];
+        }
+
+        setCurrentLesson(startLesson);
         setLoading(false);
     }
 
@@ -303,7 +323,8 @@ export default function CoursePlayer() {
     const progressPercentage = calculateProgress();
 
     return (
-        <div className="h-screen flex flex-col">
+        <div className="h-screen flex flex-col relative">
+            <WelcomePopup />
             {/* Header */}
             <div className="bg-card border-b border-border px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2 md:gap-4">
                 <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
@@ -343,12 +364,24 @@ export default function CoursePlayer() {
                     <div className="max-w-5xl mx-auto space-y-6">
                         {/* Video Player */}
                         <div>
-                            <VideoPlayer
-                                url={currentLesson.videoUrl}
-                                title={currentLesson.titulo}
-                                onEnded={handleVideoEnded}
-                                onDurationDetected={(duration) => updateLessonDuration(currentLesson.id, duration)}
-                            />
+                            {currentLesson.videoUrl ? (
+                                <VideoPlayer
+                                    url={currentLesson.videoUrl}
+                                    title={currentLesson.titulo}
+                                    onEnded={handleVideoEnded}
+                                    onDurationDetected={(duration) => updateLessonDuration(currentLesson.id, duration)}
+                                />
+                            ) : (
+                                <div className="bg-card rounded-xl border border-border overflow-hidden flex flex-col items-center justify-center p-12 text-center h-[300px] sm:h-[400px]">
+                                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                                        <FileText className="w-8 h-8 text-muted-foreground" />
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-2">Conteúdo em Texto/Anexos</h3>
+                                    <p className="text-muted-foreground max-w-md">
+                                        Esta aula não possui vídeo. Consulte a descrição e os materiais de apoio abaixo para continuar seu aprendizado.
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Lesson Info */}
@@ -359,48 +392,55 @@ export default function CoursePlayer() {
                                     <StarRating lessonId={currentLesson.id} />
                                 </div>
 
-                                <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => prevLesson && setCurrentLesson(prevLesson)}
-                                        disabled={!prevLesson}
-                                        className="hidden sm:flex"
-                                    >
-                                        <ChevronLeft className="w-4 h-4 mr-1" />
-                                        Anterior
-                                    </Button>
+                                <div className="flex flex-col items-start md:items-end gap-2 w-full md:w-auto mt-4 md:mt-0">
+                                    <div className="flex flex-wrap items-center gap-2 w-full">
+                                        <div className="flex gap-2 w-full sm:w-auto">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => prevLesson && setCurrentLesson(prevLesson)}
+                                                disabled={!prevLesson}
+                                                className="flex-1 sm:flex-none px-2 sm:px-3 text-xs sm:text-sm"
+                                            >
+                                                <ChevronLeft className="w-4 h-4 sm:mr-1" />
+                                                <span className="hidden sm:inline">Anterior</span>
+                                            </Button>
 
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => nextLesson && setCurrentLesson(nextLesson)}
-                                        disabled={!nextLesson}
-                                        className="hidden sm:flex"
-                                    >
-                                        Próxima
-                                        <ChevronRight className="w-4 h-4 ml-1" />
-                                    </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => nextLesson && setCurrentLesson(nextLesson)}
+                                                disabled={!nextLesson}
+                                                className="flex-1 sm:flex-none px-2 sm:px-3 text-xs sm:text-sm"
+                                            >
+                                                <span className="hidden sm:inline">Próxima</span>
+                                                <ChevronRight className="w-4 h-4 sm:ml-1" />
+                                            </Button>
+                                        </div>
 
-                                    <div className="w-px h-8 bg-border mx-2 hidden sm:block" />
+                                        <div className="w-px h-8 bg-border hidden sm:block" />
 
-                                    <Button
-                                        onClick={toggleLessonComplete}
-                                        variant={progress[currentLesson.id] ? "default" : "outline"}
-                                        className={progress[currentLesson.id] ? "bg-green-600 hover:bg-green-700" : ""}
-                                    >
-                                        {progress[currentLesson.id] ? (
-                                            <>
-                                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                                                Concluída
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Check className="w-4 h-4 mr-2" />
-                                                Marcar como Concluída
-                                            </>
-                                        )}
-                                    </Button>
+                                        <Button
+                                            onClick={toggleLessonComplete}
+                                            variant={progress[currentLesson.id] ? "default" : "outline"}
+                                            className={`w-full sm:w-auto text-xs sm:text-sm py-2 h-auto whitespace-normal ${progress[currentLesson.id] ? "bg-green-600 hover:bg-green-700" : ""}`}
+                                        >
+                                            {progress[currentLesson.id] ? (
+                                                <>
+                                                    <CheckCircle2 className="w-4 h-4 mr-2 flex-shrink-0" />
+                                                    Concluída
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Check className="w-4 h-4 mr-2 flex-shrink-0" />
+                                                    Marcar como Concluída
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                    <span className="text-[10px] text-muted-foreground/80 lowercase tracking-wider font-semibold mt-1 text-center sm:text-right w-full sm:w-auto">
+                                        * Marque como concluída para validar o progresso
+                                    </span>
                                 </div>
                             </div>
                             {currentLesson.description && (
@@ -423,9 +463,9 @@ export default function CoursePlayer() {
                                             rel="noopener noreferrer"
                                             className="flex items-center p-3 rounded-lg border bg-muted/50 hover:bg-muted transition-colors group"
                                         >
-                                            <FileText className="w-4 h-4 mr-3 text-muted-foreground group-hover:text-primary" />
-                                            <span className="flex-1 truncate text-sm">{att.name}</span>
-                                            <Download className="w-4 h-4 text-muted-foreground" />
+                                            <FileText className="w-4 h-4 mr-3 flex-shrink-0 text-muted-foreground group-hover:text-primary" />
+                                            <span className="flex-1 break-all text-sm">{att.name}</span>
+                                            <Download className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
                                         </a>
                                     ))}
                                 </div>

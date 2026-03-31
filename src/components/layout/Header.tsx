@@ -105,16 +105,13 @@ export const Header = () => {
                 <button onClick={() => navigate('/eventos')} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm font-medium">
                   <Calendar className="w-4 h-4"/> Eventos
                 </button>
-                <button onClick={() => navigate('/seja-parceiro')} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm font-medium">
-                  <Handshake className="w-4 h-4"/> Parceiro
-                </button>
               </div>
             </PopoverContent>
           </Popover>
 
           <button onClick={() => navigate('/')} className="hover:opacity-80 transition-opacity flex items-center gap-2">
             {settings.logoUrl ? (
-              <img src={settings.logoUrl} alt={`${settings.appName} Logo`} className="h-8 max-h-[48px] w-auto max-w-[200px] object-contain object-left" />
+              <img src={settings.logoUrl} alt={`${settings.appName} Logo`} className="h-12 max-h-[72px] w-auto max-w-[200px] object-contain object-left" />
             ) : (
               <Brain className="w-6 h-6 text-[#25D366]" />
             )}

@@ -78,6 +78,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await supabase
           .from('profiles')
           .upsert({ id: user.id, email: user.email, role: 'member' }, { onConflict: 'id' });
+
+        // Auto-Criação de Terapeuta associado
+        await supabase
+          .from('therapists')
+          .upsert({
+            id: user.id,
+            name: user.user_metadata?.full_name || user.email?.split('@')[0] || "Terapeuta Novo",
+            email: user.email,
+            state: "Em Configuração",
+            specialties: ["Terapeuta Básico"]
+          }, { onConflict: 'id' });
+
         const { data: d2 } = await supabase.from('profiles').select('*').eq('id', user.id).single();
         if (d2) {
           setProfile({
