@@ -47,7 +47,19 @@ import { useEffect, useRef, useState } from "react";
 
 export const VideoPlayer = ({ url, title, onEnded, onDurationDetected }: Props) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [supportsFullscreen, setSupportsFullscreen] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    // Detecta se o navegador suporta Fullscreen API (ex: false no iPhone)
+    const canFullscreen = !!(
+      document.fullscreenEnabled ||
+      (document as any).webkitFullscreenEnabled ||
+      (document as any).mozFullScreenEnabled ||
+      (document as any).msFullscreenEnabled
+    );
+    setSupportsFullscreen(canFullscreen);
+  }, []);
 
   useEffect(() => {
     if (!url || !isVimeo(url) || !onDurationDetected) return;
@@ -148,7 +160,7 @@ export const VideoPlayer = ({ url, title, onEnded, onDurationDetected }: Props) 
         />
         
         {/* Camada superior em todo o vídeo quando PAUSADO para interceptar o clique com gesto local */}
-        {!isPlaying && (
+        {!isPlaying && supportsFullscreen && (
           <div
             className="absolute inset-0 z-20 cursor-pointer bg-transparent"
             onClick={(e) => {
