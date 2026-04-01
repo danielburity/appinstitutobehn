@@ -418,10 +418,10 @@ export default function Admin() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Painel Administrativo</h1>
-        <Button onClick={loadData} variant="outline" size="sm">Atualizar</Button>
+    <div className="space-y-6 min-w-0 max-w-full overflow-hidden pb-20 md:pb-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold truncate max-w-full">Painel Admin</h1>
+        <Button onClick={loadData} variant="outline" size="sm" className="w-full sm:w-auto">Atualizar Dados</Button>
       </div>
 
       {managingContentCourse ? (
@@ -434,7 +434,7 @@ export default function Admin() {
         />
       ) : (
         <Tabs defaultValue="courses" className="w-full">
-          <TabsList>
+          <TabsList className="w-full flex flex-wrap h-auto justify-start md:justify-center p-1 gap-1">
             <TabsTrigger value="courses">Cursos</TabsTrigger>
             <TabsTrigger value="therapists">Terapeutas</TabsTrigger>
             <TabsTrigger value="events">Eventos</TabsTrigger>
@@ -444,16 +444,16 @@ export default function Admin() {
 
           {/* APPEARANCE TAB */}
           <TabsContent value="appearance" className="space-y-6">
-            <div className="flex justify-between items-center bg-card p-4 rounded-lg border shadow-sm">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-4 rounded-lg border shadow-sm">
               <div>
                  <h2 className="text-xl font-bold">Personalização do App</h2>
                  <p className="text-muted-foreground text-sm mt-1">Configure cores, textos principais e logotipo. Você precisa de privilégio de Admin no banco de dados para salvar.</p>
               </div>
-              <div className="flex items-center gap-4">
-                <Button onClick={() => window.open('/', '_blank')} variant="outline" size="sm">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                <Button onClick={() => window.open('/', '_blank')} variant="outline" className="w-full sm:w-auto">
                   Ver Site Ao Vivo
                 </Button>
-                <Button onClick={saveAppearance} disabled={savingAppearance} className="gradient-primary">
+                <Button onClick={saveAppearance} disabled={savingAppearance} className="gradient-primary w-full sm:w-auto">
                   {savingAppearance && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Salvar Alterações
                 </Button>
@@ -553,9 +553,9 @@ export default function Admin() {
 
           {/* COURSES TAB */}
           <TabsContent value="courses" className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h2 className="text-xl font-bold">Gerenciar Cursos</h2>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Dialog>
                   <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" /> Novo Curso</Button></DialogTrigger>
                 <DialogContent className="max-h-[80vh] overflow-y-auto">
@@ -718,7 +718,7 @@ export default function Admin() {
 
           {/* THERAPISTS TAB */}
           <TabsContent value="therapists" className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h2 className="text-xl font-bold">Gerenciar Terapeutas</h2>
               <Dialog>
                 <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" /> Novo Terapeuta</Button></DialogTrigger>
@@ -842,7 +842,7 @@ export default function Admin() {
 
           {/* EVENTS TAB */}
           <TabsContent value="events" className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h2 className="text-xl font-bold">Gerenciar Eventos</h2>
               <Dialog>
                 <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" /> Novo Evento</Button></DialogTrigger>
@@ -932,8 +932,8 @@ export default function Admin() {
 
           {/* MATERIALS TAB */}
           <TabsContent value="materials" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold">Gerenciar Materiais de Apoio</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <h2 className="text-xl font-bold">Gerenciar Materiais</h2>
               <Dialog>
                 <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" /> Novo Material</Button></DialogTrigger>
                 <DialogContent>
