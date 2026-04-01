@@ -51,7 +51,16 @@ export const VideoPlayer = ({ url, title, onEnded, onDurationDetected }: Props) 
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    // Detecta se o navegador suporta Fullscreen API (ex: false no iPhone)
+    // Precisamos excluir o iOS explicitamente pois ele aponta ter suporte ao webkitFullscreen
+    // mas não funciona em divs, apenas na tag video interna que é inacessível pelo iframe.
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    if (isIOS) {
+      setSupportsFullscreen(false);
+      return;
+    }
+
+    // Detecta se o navegador suporta Fullscreen API para Desktop e Android
     const canFullscreen = !!(
       document.fullscreenEnabled ||
       (document as any).webkitFullscreenEnabled ||
@@ -152,7 +161,7 @@ export const VideoPlayer = ({ url, title, onEnded, onDurationDetected }: Props) 
         <iframe
           ref={iframeRef}
           title={title || "Vídeo"}
-          src={`${getVimeoEmbedUrl(url)}${url.includes("?") ? "&" : "?"}api=1&dnt=1&title=0&byline=0&portrait=0&badge=0`}
+          src={`${getVimeoEmbedUrl(url)}${url.includes("?") ? "&" : "?"}api=1&dnt=1&title=0&byline=0&portrait=0&badge=0&playsinline=0`}
           className="w-full h-full"
           allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
           allowFullScreen
@@ -187,8 +196,8 @@ export const VideoPlayer = ({ url, title, onEnded, onDurationDetected }: Props) 
           />
         )}
 
-        {/* Camada parcial permanente apenas contra right-click, não bloqueia controles nativos e mantém isPlaying saudável */}
-        {isPlaying && (
+        {/* Camada parcial permanente apenas contra right-click (ignorada no iOS para permitir touch limpo) */}
+        {isPlaying && supportsFullscreen && (
           <div
             className="absolute inset-0 z-10 pointer-events-none"
             onContextMenu={(e) => e.preventDefault()}
