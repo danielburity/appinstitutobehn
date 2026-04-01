@@ -43,9 +43,10 @@ const getVimeoEmbedUrl = (url: string) => {
   return url;
 };
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const VideoPlayer = ({ url, title, onEnded, onDurationDetected }: Props) => {
+  const [isPlaying, setIsPlaying] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -58,9 +59,11 @@ export const VideoPlayer = ({ url, title, onEnded, onDurationDetected }: Props) 
       try {
         const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
 
-        // When player is ready, we can request duration
+        // When player is ready, we can request duration and set listeners
         if (data.event === "ready" && iframeRef.current?.contentWindow) {
           iframeRef.current.contentWindow.postMessage(JSON.stringify({ method: "getDuration" }), "*");
+          iframeRef.current.contentWindow.postMessage(JSON.stringify({ method: "addEventListener", value: "play" }), "*");
+          iframeRef.current.contentWindow.postMessage(JSON.stringify({ method: "addEventListener", value: "pause" }), "*");
         }
 
         // Receive duration from Vimeo
@@ -73,19 +76,12 @@ export const VideoPlayer = ({ url, title, onEnded, onDurationDetected }: Props) 
             onDurationDetected(durationStr);
           }
         }
-        // Triggers auto-fullscreen on play
+        // Handle play/pause events from Vimeo directly
         if (data.event === "play") {
-          const iframe = iframeRef.current;
-          if (iframe) {
-            const container = iframe.closest('.aspect-video') || iframe;
-            try {
-              if (container.requestFullscreen) {
-                container.requestFullscreen().catch(() => {});
-              } else if ((container as any).webkitRequestFullscreen) {
-                (container as any).webkitRequestFullscreen();
-              }
-            } catch (err) {}
-          }
+          setIsPlaying(true);
+        }
+        if (data.event === "pause") {
+          setIsPlaying(false);
         }
 
       } catch (e) {
@@ -150,36 +146,44 @@ export const VideoPlayer = ({ url, title, onEnded, onDurationDetected }: Props) 
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
         />
-        {/* Proteção contra botão direito e clique acidental que leva ao Vimeo */}
-        <div
-          className="absolute inset-0 z-10 pointer-events-none"
-          onContextMenu={(e) => e.preventDefault()}
-        >
+        
+        {/* Camada superior em todo o vídeo quando PAUSADO para interceptar o clique com gesto local */}
+        {!isPlaying && (
           <div
-            className="w-full h-[calc(100%-60px)] pointer-events-auto bg-transparent cursor-pointer"
-            onContextMenu={(e) => e.preventDefault()}
+            className="absolute inset-0 z-20 cursor-pointer bg-transparent"
             onClick={(e) => {
-              // Tenta auto-tela cheia
-              const container = e.currentTarget.closest('.aspect-video');
+              // 1. OBRIGATÓRIO: Chamar fullscreen sincronamente dentro deste evento do usuário
+              const container = iframeRef.current || e.currentTarget.closest('.aspect-video');
               if (container) {
                 try {
-                  if (container.requestFullscreen) {
-                    container.requestFullscreen().catch(() => {});
+                  if ((container as any).requestFullscreen) {
+                    (container as any).requestFullscreen().catch(() => {});
                   } else if ((container as any).webkitRequestFullscreen) {
                     (container as any).webkitRequestFullscreen();
                   }
                 } catch (err) {}
               }
 
-              // Tenta alternar play/pause via postMessage
+              // 2. Comanda o play para o Vimeo
               if (iframeRef.current?.contentWindow) {
                 iframeRef.current.contentWindow.postMessage('{"method":"play"}', "*");
-                // Nota: para um "toggle" real precisaríamos de mais lógica de estado,
-                // mas isso já impede o clique de abrir o link do Vimeo
               }
+              
+              // 3. Otimista update visual
+              setIsPlaying(true);
             }}
           />
-        </div>
+        )}
+
+        {/* Camada parcial permanente apenas contra right-click, não bloqueia controles nativos e mantém isPlaying saudável */}
+        {isPlaying && (
+          <div
+            className="absolute inset-0 z-10 pointer-events-none"
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            <div className="w-full h-[calc(100%-60px)] pointer-events-auto bg-transparent" />
+          </div>
+        )}
       </div>
     );
   }
