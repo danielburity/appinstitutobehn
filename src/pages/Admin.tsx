@@ -9,8 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Image as ImageIcon, Loader2, Edit2, BookOpen, Upload, Package, Camera } from 'lucide-react';
-import { Course, Therapist, AppEvent, Material } from '@/lib/types';
+import { Plus, Pencil, Trash2, Image as ImageIcon, Loader2, Edit2, BookOpen, Upload, Camera, Send } from 'lucide-react';
+import { Course, Therapist, AppEvent } from '@/lib/types';
 import { hexToHsl, hslToHex } from '@/lib/utils';
 import { CourseContentManager } from '@/components/admin/CourseContentManager';
 import { toast } from 'sonner';
@@ -67,7 +67,6 @@ export default function Admin() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [events, setEvents] = useState<AppEvent[]>([]);
-  const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Forms states
@@ -86,17 +85,16 @@ export default function Admin() {
   });
   const [therapistForm, setTherapistForm] = useState({ name: '', city: '', state: '', postal_code: '', specialties: '', selo_approved: false, gender: 'female', avatar_url: '', rating: '', contact_whatsapp: '' });
   const [eventForm, setEventForm] = useState({ title: '', date: '', type: 'online', featured: false, external_url: '', image_url: '', description: '', category: '', location: '' });
-  const [materialForm, setMaterialForm] = useState({ title: '', description: '', image_url: '', external_url: '', price: '', category: '' });
+  const [notificationForm, setNotificationForm] = useState({ title: '', content: '' });
 
   const [managingContentCourse, setManagingContentCourse] = useState<Course | null>(null);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [editingTherapist, setEditingTherapist] = useState<Therapist | null>(null);
   const [editingEvent, setEditingEvent] = useState<AppEvent | null>(null);
   const [appearanceForm, setAppearanceForm] = useState<AppSettings>(settings);
   const [savingAppearance, setSavingAppearance] = useState(false);
+  const [sendingNotification, setSendingNotification] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [materialEditDialogOpen, setMaterialEditDialogOpen] = useState(false);
   const [therapistEditDialogOpen, setTherapistEditDialogOpen] = useState(false);
   const [eventEditDialogOpen, setEventEditDialogOpen] = useState(false);
 
@@ -111,12 +109,10 @@ export default function Admin() {
     const { data: c } = await supabase.from('courses').select('*').order('updated_at', { ascending: false });
     const { data: t } = await supabase.from('therapists').select('*').order('updated_at', { ascending: false });
     const { data: e } = await supabase.from('events').select('*').order('updated_at', { ascending: false });
-    const { data: m } = await supabase.from('materials').select('*').order('updated_at', { ascending: false });
 
     if (c) setCourses(c);
     if (t) setTherapists(t);
     if (e) setEvents(e);
-    if (m) setMaterials(m);
     setLoading(false);
   }
 
@@ -199,21 +195,40 @@ export default function Admin() {
     }
   }
 
-  async function createMaterial() {
-    setLoading(true);
-    const { error } = await supabase.from('materials').insert({
-      ...materialForm,
-      created_by: user?.id
-    });
-    setLoading(false);
-    if (error) toast.error('Erro: ' + error.message);
+  async function sendGlobalNotification() {
+    if (!notificationForm.title || !notificationForm.content) {
+      toast.error('Preencha título e conteúdo da notificação.');
+      return;
+    }
+    setSendingNotification(true);
+    
+    // Obter todos os usuários ativos
+    const { data: profiles, error: pError } = await supabase.from('profiles').select('id');
+    
+    if (pError || !profiles) {
+      toast.error('Erro ao buscar usuários: ' + (pError?.message || 'vazio'));
+      setSendingNotification(false);
+      return;
+    }
+    
+    // Montar lotes de inserção para tabela notifications
+    const inserts = profiles.map(p => ({
+      user_id: p.id,
+      title: notificationForm.title,
+      content: notificationForm.content,
+      read: false
+    }));
+
+    // Inserir todos   
+    const { error: iError } = await supabase.from('notifications').insert(inserts);
+
+    setSendingNotification(false);
+    if (iError) toast.error('Erro no disparo: ' + iError.message);
     else {
-      toast.success('Material criado!');
-      loadData();
-      setMaterialForm({ title: '', description: '', image_url: '', external_url: '', price: '', category: '' });
+      toast.success(`Notificação enviada com sucesso para ${profiles.length} usuários!`);
+      setNotificationForm({ title: '', content: '' });
     }
   }
-
 
 
   async function updateCourse() {
@@ -266,33 +281,6 @@ export default function Admin() {
     setEditDialogOpen(true);
   }
 
-  function openEditMaterialDialog(material: Material) {
-    setEditingMaterial(material);
-    setMaterialForm({
-      title: material.title || '',
-      description: material.description || '',
-      image_url: material.image_url || '',
-      external_url: material.external_url || '',
-      price: material.price || '',
-      category: material.category || ''
-    });
-    setMaterialEditDialogOpen(true);
-  }
-
-  async function updateMaterial() {
-    if (!editingMaterial) return;
-    setLoading(true);
-    const { error } = await supabase.from('materials').update(materialForm).eq('id', editingMaterial.id);
-    setLoading(false);
-    if (error) toast.error('Erro ao atualizar: ' + error.message);
-    else {
-      toast.success('Material atualizado!');
-      loadData();
-      setMaterialEditDialogOpen(false);
-      setEditingMaterial(null);
-      setMaterialForm({ title: '', description: '', image_url: '', external_url: '', price: '', category: '' });
-    }
-  }
 
   function openEditTherapistDialog(therapist: Therapist) {
     setEditingTherapist(therapist);
@@ -438,7 +426,7 @@ export default function Admin() {
             <TabsTrigger value="courses">Cursos</TabsTrigger>
             <TabsTrigger value="therapists">Terapeutas</TabsTrigger>
             <TabsTrigger value="events">Eventos</TabsTrigger>
-            <TabsTrigger value="materials">Materiais</TabsTrigger>
+            <TabsTrigger value="notifications">Notificações</TabsTrigger>
             <TabsTrigger value="appearance">Aparência</TabsTrigger>
           </TabsList>
 
@@ -930,90 +918,48 @@ export default function Admin() {
             </Dialog>
           </TabsContent>
 
-          {/* MATERIALS TAB */}
-          <TabsContent value="materials" className="space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h2 className="text-xl font-bold">Gerenciar Materiais</h2>
-              <Dialog>
-                <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" /> Novo Material</Button></DialogTrigger>
-                <DialogContent>
-                  <DialogHeader><DialogTitle>Novo Material</DialogTitle></DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="space-y-2"><Label>Título</Label><Input value={materialForm.title} onChange={e => setMaterialForm({ ...materialForm, title: e.target.value })} /></div>
-                    <ImageUpload
-                      label="Imagem do Material"
-                      value={materialForm.image_url}
-                      onChange={(url) => setMaterialForm({ ...materialForm, image_url: url })}
-                      folder="materials"
-                    />
-                    <div className="space-y-2"><Label>Link de Compra</Label><Input value={materialForm.external_url} onChange={e => setMaterialForm({ ...materialForm, external_url: e.target.value })} placeholder="https://..." /></div>
-                    <div className="space-y-2"><Label>Preço (ex: R$ 49,90)</Label><Input value={materialForm.price} onChange={e => setMaterialForm({ ...materialForm, price: e.target.value })} /></div>
-                    <div className="space-y-2"><Label>Categoria</Label><Input value={materialForm.category} onChange={e => setMaterialForm({ ...materialForm, category: e.target.value })} placeholder="Livros, Ferramentas, etc" /></div>
-                    <div className="space-y-2"><Label>Descrição</Label><Input value={materialForm.description} onChange={e => setMaterialForm({ ...materialForm, description: e.target.value })} /></div>
-                    <Button onClick={createMaterial} disabled={loading}>
-                      {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      Salvar
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader><TableRow><TableHead>Título</TableHead><TableHead>Categoria</TableHead><TableHead>Preço</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
-                <TableBody>
-                  {materials.map(m => (
-                    <TableRow key={m.id}>
-                      <TableCell>{m.title}</TableCell>
-                      <TableCell>{m.category}</TableCell>
-                      <TableCell>{m.price}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEditMaterialDialog(m)}
-                            title="Editar Material"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteItem('materials', m.id)} className="text-destructive">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          {/* NOTIFICATIONS TAB */}
+          <TabsContent value="notifications" className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-4 rounded-lg border shadow-sm">
+              <div>
+                 <h2 className="text-xl font-bold">Disparo de Notificações</h2>
+                 <p className="text-muted-foreground text-sm mt-1">Envie alertas "In-App" instantâneos para todos os alunos cadastrados no aplicativo.</p>
+              </div>
             </div>
 
-            {/* Edit Material Dialog */}
-            <Dialog open={materialEditDialogOpen} onOpenChange={setMaterialEditDialogOpen}>
-              <DialogContent className="max-h-[80vh] overflow-y-auto">
-                <DialogHeader><DialogTitle>Editar Material</DialogTitle></DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="space-y-2"><Label>Título</Label><Input value={materialForm.title} onChange={e => setMaterialForm({ ...materialForm, title: e.target.value })} /></div>
-                  <ImageUpload
-                    label="Imagem do Material"
-                    value={materialForm.image_url}
-                    onChange={(url) => setMaterialForm({ ...materialForm, image_url: url })}
-                    folder="materials"
-                  />
-                  <div className="space-y-2"><Label>Link de Compra</Label><Input value={materialForm.external_url} onChange={e => setMaterialForm({ ...materialForm, external_url: e.target.value })} placeholder="https://..." /></div>
-                  <div className="space-y-2"><Label>Preço (ex: R$ 49,90)</Label><Input value={materialForm.price} onChange={e => setMaterialForm({ ...materialForm, price: e.target.value })} /></div>
-                  <div className="space-y-2"><Label>Categoria</Label><Input value={materialForm.category} onChange={e => setMaterialForm({ ...materialForm, category: e.target.value })} placeholder="Livros, Ferramentas, etc" /></div>
-                  <div className="space-y-2"><Label>Descrição</Label><Input value={materialForm.description} onChange={e => setMaterialForm({ ...materialForm, description: e.target.value })} /></div>
-                  <div className="flex gap-2">
-                    <Button onClick={updateMaterial} className="flex-1" disabled={loading}>
-                      {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      Salvar Alterações
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <div className="space-y-4 max-w-2xl">
+                  <div className="space-y-2">
+                    <Label>Título do Aviso</Label>
+                    <Input 
+                      placeholder="Ex: Nova Aula Liberada!" 
+                      value={notificationForm.title}
+                      onChange={e => setNotificationForm({...notificationForm, title: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Mensagem</Label>
+                    <textarea
+                      className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Ex: O Módulo 2 do curso Mapeamento já se encontra disponível. Acesse e comente..."
+                      value={notificationForm.content}
+                      onChange={e => setNotificationForm({...notificationForm, content: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div className="pt-4">
+                    <Button onClick={sendGlobalNotification} disabled={sendingNotification} className="w-full sm:w-auto">
+                      {sendingNotification ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                      {sendingNotification ? 'Disparando...' : 'Disparar para Todos'}
                     </Button>
-                    <Button variant="outline" onClick={() => setMaterialEditDialogOpen(false)}>Cancelar</Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      OBS: Disparos são enviados para todos os perfis cadastrados no banco. Os usuários verão o aviso no "Sininho" dentro do App.
+                    </p>
                   </div>
                 </div>
-              </DialogContent>
-            </Dialog>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       )}
