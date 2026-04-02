@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings, AppSettings } from '@/context/SettingsContext';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -86,6 +87,7 @@ export default function Admin() {
   const [therapistForm, setTherapistForm] = useState({ name: '', city: '', state: '', postal_code: '', specialties: '', selo_approved: false, gender: 'female', avatar_url: '', rating: '', contact_whatsapp: '' });
   const [eventForm, setEventForm] = useState({ title: '', date: '', type: 'online', featured: false, external_url: '', image_url: '', description: '', category: '', location: '' });
   const [notificationForm, setNotificationForm] = useState({ title: '', content: '' });
+  const [accessForm, setAccessForm] = useState({ fullName: '', email: '', password: 'Instituto@123', givePlatform: true, selectedCourseId: 'none' });
 
   const [managingContentCourse, setManagingContentCourse] = useState<Course | null>(null);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
@@ -94,6 +96,7 @@ export default function Admin() {
   const [appearanceForm, setAppearanceForm] = useState<AppSettings>(settings);
   const [savingAppearance, setSavingAppearance] = useState(false);
   const [sendingNotification, setSendingNotification] = useState(false);
+  const [grantingAccess, setGrantingAccess] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [therapistEditDialogOpen, setTherapistEditDialogOpen] = useState(false);
   const [eventEditDialogOpen, setEventEditDialogOpen] = useState(false);
@@ -230,6 +233,79 @@ export default function Admin() {
     }
   }
 
+
+  async function handleGrantAccess() {
+    if (!accessForm.email) {
+      toast.error('Preencha pelo menos o e-mail do aluno.');
+      return;
+    }
+    setGrantingAccess(true);
+    let targetUserId = null;
+    
+    // 1. Check if user exists in profiles
+    const { data: existingProfile } = await supabase.from('profiles').select('id, email').eq('email', accessForm.email).maybeSingle();
+    
+    if (existingProfile) {
+       targetUserId = existingProfile.id;
+    } else {
+       if (!accessForm.fullName || !accessForm.password) {
+          toast.error('Aluno não encontrado. Preencha Nome Completo e Senha para criar a conta na hora.');
+          setGrantingAccess(false);
+          return;
+       }
+       // 2. Try to signUp securely without disconnecting admin
+       const secondarySupabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+       const { data: signUpData, error: signUpError } = await secondarySupabase.auth.signUp({
+         email: accessForm.email,
+         password: accessForm.password,
+         options: { data: { full_name: accessForm.fullName } }
+       });
+       
+       if (signUpError || !signUpData.user) {
+          toast.error("Erro ao criar conta: " + (signUpError?.message || 'vazio'));
+          setGrantingAccess(false);
+          return;
+       }
+       targetUserId = signUpData.user.id;
+       
+       // Force insert profile
+       await supabase.from('profiles').insert({
+         id: targetUserId,
+         email: accessForm.email,
+         full_name: accessForm.fullName,
+         role: 'member'
+       });
+       // Auto create therapist profile to prevent errors
+       await supabase.from('therapists').insert({
+         id: targetUserId,
+         name: accessForm.fullName,
+         email: accessForm.email,
+         state: "Em Configuração",
+         specialties: ["Terapeuta"]
+       });
+       toast.success("Conta criada para: " + accessForm.email);
+    }
+
+    // 3. Grant Platform Access
+    if (accessForm.givePlatform) {
+       await supabase.from('profiles').update({ subscription_status: 'active' }).eq('id', targetUserId);
+    }
+
+    // 4. Grant Course Access
+    if (accessForm.selectedCourseId !== 'none') {
+       const { error: cError } = await supabase.from('user_courses').upsert({
+         user_id: targetUserId,
+         course_id: parseInt(accessForm.selectedCourseId)
+       }, { onConflict: 'user_id,course_id' });
+       if (cError) {
+         toast.error("Erro ao vincular curso: " + cError.message);
+       }
+    }
+
+    toast.success("Cursos e Acessos ativados com Sucesso!");
+    setGrantingAccess(false);
+    setAccessForm({ fullName: '', email: '', password: 'Instituto@123', givePlatform: true, selectedCourseId: 'none' });
+  }
 
   async function updateCourse() {
     if (!editingCourse) return;
@@ -422,13 +498,99 @@ export default function Admin() {
         />
       ) : (
         <Tabs defaultValue="courses" className="w-full">
-          <TabsList className="w-full flex flex-wrap h-auto justify-start md:justify-center p-1 gap-1">
+          <TabsList className="w-full flex-wrap h-auto justify-start md:justify-center p-1 gap-1 flex">
             <TabsTrigger value="courses">Cursos</TabsTrigger>
             <TabsTrigger value="therapists">Terapeutas</TabsTrigger>
             <TabsTrigger value="events">Eventos</TabsTrigger>
             <TabsTrigger value="notifications">Notificações</TabsTrigger>
+            <TabsTrigger value="access">Acessos/Matrícula</TabsTrigger>
             <TabsTrigger value="appearance">Aparência</TabsTrigger>
           </TabsList>
+
+          {/* ACCESS CONTROL TAB */}
+          <TabsContent value="access" className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-4 rounded-lg border shadow-sm">
+              <div>
+                 <h2 className="text-xl font-bold">Matrícula In-App e Acessos</h2>
+                 <p className="text-muted-foreground text-sm mt-1">Crie contas, ative matrículas da Plataforma e libere os Cursos Premium avulsos para os alunos.</p>
+              </div>
+            </div>
+
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Informações do Usuário */}
+                  <div className="space-y-4">
+                    <h3 className="font-bold text-lg border-b pb-2">Identificação do Aluno</h3>
+                    <div className="space-y-2">
+                      <Label>E-mail do Aluno (Existente ou Novo)</Label>
+                      <Input 
+                        placeholder="aluno@email.com" 
+                        value={accessForm.email}
+                        onChange={e => setAccessForm({...accessForm, email: e.target.value.toLowerCase()})}
+                      />
+                      <p className="text-xs text-muted-foreground">Se o e-mail não existir, criaremos uma conta!</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Nome Completo (Obrigatório se conta for nova)</Label>
+                      <Input 
+                        placeholder="Ex: João Silva" 
+                        value={accessForm.fullName}
+                        onChange={e => setAccessForm({...accessForm, fullName: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Senha Automática (Se for criar conta)</Label>
+                      <Input 
+                        value={accessForm.password}
+                        onChange={e => setAccessForm({...accessForm, password: e.target.value})}
+                      />
+                      <p className="text-xs text-muted-foreground">Envie esta senha temporária para o aluno por fora.</p>
+                    </div>
+                  </div>
+
+                  {/* Liberação de Acesso */}
+                  <div className="space-y-4">
+                    <h3 className="font-bold text-lg border-b pb-2">Gerenciar Permissões</h3>
+                    
+                    <div className="flex items-start gap-3 p-3 border rounded-md bg-muted/20">
+                      <input 
+                         type="checkbox" 
+                         id="give_platform"
+                         className="mt-1"
+                         checked={accessForm.givePlatform}
+                         onChange={e => setAccessForm({...accessForm, givePlatform: e.target.checked})}
+                      />
+                      <div>
+                        <Label htmlFor="give_platform" className="font-bold cursor-pointer">Assinante Plataforma Instituto Behn (Ativar)</Label>
+                        <p className="text-xs text-muted-foreground mt-0.5">Dá permissão nativa ao Curso de Afiliados, Terapeutas e Interface completa.</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 p-3 border rounded-md bg-muted/20">
+                      <Label className="font-bold">Liberar Compra/Curso Avulso</Label>
+                      <select
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        value={accessForm.selectedCourseId}
+                        onChange={e => setAccessForm({...accessForm, selectedCourseId: e.target.value})}
+                      >
+                        <option value="none">-- Nenhum Curso Adicional --</option>
+                        {courses.filter(c => c.is_premium && c.slug !== 'afiliados-instituto-behn').map(course => (
+                          <option key={course.id} value={course.id}>{course.title}</option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-muted-foreground mt-0.5">Destranca um Produto específico que opera com compra em separado (Hotmart-style).</p>
+                    </div>
+
+                    <Button onClick={handleGrantAccess} disabled={grantingAccess} className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90 h-10 text-md">
+                      {grantingAccess ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                      {grantingAccess ? 'Processando Contas...' : 'Processar Matrícula (Criar & Liberar)'}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* APPEARANCE TAB */}
           <TabsContent value="appearance" className="space-y-6">

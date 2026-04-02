@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
+import { WelcomeModal } from "../features/WelcomeModal";
 
 interface LayoutProps {
   children: ReactNode;
@@ -21,6 +22,7 @@ export const Layout = ({ children }: LayoutProps) => {
       </div>
 
       <BottomNav />
+      <WelcomeModal />
     </div>
   );
 };

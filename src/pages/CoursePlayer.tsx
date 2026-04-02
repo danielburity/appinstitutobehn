@@ -52,13 +52,33 @@ export default function CoursePlayer() {
             return;
         }
 
-        // Check premium status
-        const hasAccess = isAdmin || (courseData.slug === 'afiliados-instituto-behn' && isMember);
-        if (!hasAccess) {
+        // ------------------ CHECAGEM ROBUSTA DE ACESSO NO PLAYER ------------------
+        let grantAccess = false;
+        if (isAdmin) {
+            grantAccess = true;
+        } else if (!courseData.is_premium) {
+            grantAccess = true;
+        } else if (courseData.slug === 'afiliados-instituto-behn' && isMember) {
+            grantAccess = true;
+        } else if (user) {
+            const { data: uc, error: errUc } = await supabase
+               .from('user_courses')
+               .select('id')
+               .eq('user_id', user.id)
+               .eq('course_id', courseData.id)
+               .maybeSingle();
+
+            if (uc && !errUc) {
+               grantAccess = true;
+            }
+        }
+
+        if (!grantAccess) {
             toast.error('Você não tem acesso a este curso.');
             navigate(`/curso/${courseData.slug || courseData.id}`);
             return;
         }
+        // -------------------------------------------------------------------------
 
         // Sign URLs for attachments
         const modulesWithSignedUrls = await Promise.all(courseData.modules?.map(async (m: any) => {

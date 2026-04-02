@@ -17,6 +17,7 @@ const CourseDetail = () => {
   const [course, setCourse] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("visao-geral");
+  const [hasAccess, setHasAccess] = useState(false);
   const [selected, setSelected] = useState<{
     id?: string;
     titulo: string;
@@ -127,19 +128,40 @@ const CourseDetail = () => {
           is_premium: data.is_premium
         });
 
-        // Update module status based on global access rule after state is set, actually we can just do it in render or here.
+        // ------------------ CHECAGEM ROBUSTA DE ACESSO (HOTMART STYLE) ------------------
+        let grantAccess = false;
+        if (isAdmin) {
+            grantAccess = true;
+        } else if (!data.is_premium) {
+            grantAccess = true;
+        } else if (data.slug === 'afiliados-instituto-behn' && isMember) {
+            grantAccess = true;
+        } else if (user) {
+            // Verifica se o aluno logado "comprou" este curso específico (Pagar.me/Manualmente)
+            const { data: uc, error: errUc } = await supabase
+               .from('user_courses')
+               .select('id')
+               .eq('user_id', user.id)
+               .eq('course_id', data.id)
+               .maybeSingle();
+
+            if (uc && !errUc) {
+               grantAccess = true;
+            }
+        }
+        setHasAccess(grantAccess);
+        // ----------------------------------------------------------------------------------
+
       }
       setLoading(false);
     }
-    if (user) load();
-  }, [id, user]);
+    if (user || isAdmin !== undefined) load();
+  }, [id, user, isAdmin, isMember]);
 
 
 
-  if (loading) return <div>Carregando...</div>;
-  if (!course) return <div>Curso não encontrado</div>;
-
-  const hasAccess = isAdmin || (course.slug === 'afiliados-instituto-behn' && isMember);
+  if (loading) return <div className="p-8 text-center"><span className="animate-pulse">Carregando permissões do curso...</span></div>;
+  if (!course) return <div className="p-8 text-center text-red-500">Curso não encontrado.</div>;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
