@@ -68,15 +68,19 @@ export function LessonEditor({ moduleId, lesson, onSave, onCancel }: LessonEdito
                     return item;
                 }
                 // It's a path, sign it
-                const { data: signed } = await supabase.storage
+                const { data: signed, error } = await supabase.storage
                     .from('course-content')
                     .createSignedUrl(item.url, 3600); // 1 hour
 
+                let finalUrl = signed?.signedUrl;
+                if (error || !finalUrl) {
+                    const { data: publicData } = supabase.storage.from('course-content').getPublicUrl(item.url);
+                    finalUrl = publicData?.publicUrl || item.url;
+                }
+
                 return {
                     ...item,
-                    signedUrl: signed?.signedUrl || null // Add a temp property or replace url? 
-                    // Let's replace URL for display purposes, but keep original for deletion if needed? 
-                    // We typically delete by ID anyway.
+                    signedUrl: finalUrl // Replace with generated absolute URL
                 };
             }));
             setAttachments(signedData as any);

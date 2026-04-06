@@ -91,15 +91,17 @@ export default function CoursePlayer() {
                             .from('course-content')
                             .createSignedUrl(a.url, 3600);
 
-                        if (error) {
+                        if (error || !signed?.signedUrl) {
                             console.warn('Erro ao criar signed URL para anexo:', a.name, error);
-                            return a;
+                            const { data: publicData } = supabase.storage.from('course-content').getPublicUrl(a.url);
+                            return { ...a, url: publicData?.publicUrl || a.url };
                         }
 
-                        return { ...a, url: signed?.signedUrl || a.url };
+                        return { ...a, url: signed.signedUrl };
                     } catch (err) {
                         console.warn('Erro ao processar anexo:', a.name, err);
-                        return a;
+                        const { data: publicData } = supabase.storage.from('course-content').getPublicUrl(a.url);
+                        return { ...a, url: publicData?.publicUrl || a.url };
                     }
                 }) || []);
 
