@@ -258,7 +258,7 @@ const CourseDetail = () => {
         <Button
           className="w-full md:w-auto bg-slate-800 text-white hover:bg-slate-700"
           size="lg"
-          onClick={() => navigate('/subscription')}
+          onClick={() => navigate('/assinatura')}
         >
           <Lock className="w-4 h-4 mr-2" />
           Assinar Plataforma
@@ -276,7 +276,7 @@ const CourseDetail = () => {
         <Button
           className="w-full md:w-auto gradient-primary text-white shadow-xl hover:scale-105 transition-all"
           size="lg"
-          onClick={() => navigate(`/subscription?course_id=${course.id}&course_title=${encodeURIComponent(course.titulo)}`)}
+          onClick={() => navigate(`/assinatura?course_id=${course.id}&course_title=${encodeURIComponent(course.titulo)}`)}
         >
           <Lock className="w-4 h-4 mr-2" />
           Comprar Curso (R$ 1,00)
