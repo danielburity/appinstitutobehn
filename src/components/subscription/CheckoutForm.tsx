@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useSearchParams } from "react-router-dom";
 import { User, Mail, FileText, Phone, Lock, CheckCircle2, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,12 +27,36 @@ export const CheckoutForm = () => {
     const [step, setStep] = useState(1);
     const [isCheckingPayment, setIsCheckingPayment] = useState(false);
     const [listeningUserId, setListeningUserId] = useState<string | null>(null);
+    const [searchParams] = useSearchParams();
+    const courseId = searchParams.get("course_id");
+    const courseTitle = searchParams.get("course_title");
 
     // Efeito para escutar a aprovação do pagamento em tempo real
     React.useEffect(() => {
         if (!isCheckingPayment || !listeningUserId) return;
 
-        console.log(`[POLLING] Iniciando escuta para o User ID: ${listeningUserId}`);
+        if (courseId) {
+            console.log(`[POLLING] Iniciando escuta de curso (ID: ${courseId}) para User: ${listeningUserId}`);
+            const interval = setInterval(async () => {
+                const { data } = await supabase
+                    .from('user_courses')
+                    .select('id')
+                    .eq('user_id', listeningUserId)
+                    .eq('course_id', courseId)
+                    .maybeSingle();
+
+                if (data) {
+                    toast.success("Pagamento confirmado! Acessando curso...");
+                    setTimeout(() => {
+                        window.location.href = `/curso/${courseId}/assistir`;
+                    }, 1500);
+                    clearInterval(interval);
+                }
+            }, 3000);
+            return () => clearInterval(interval);
+        }
+
+        console.log(`[POLLING] Iniciando escuta de assinatura para o User ID: ${listeningUserId}`);
         const channel = supabase
             .channel(`public:profiles:id=eq.${listeningUserId}`)
             .on(
@@ -76,7 +101,7 @@ export const CheckoutForm = () => {
             supabase.removeChannel(channel);
             clearInterval(interval);
         };
-    }, [isCheckingPayment, listeningUserId]);
+    }, [isCheckingPayment, listeningUserId, courseId]);
 
     const { register, handleSubmit, formState: { errors } } = useForm<CheckoutData>({
         resolver: zodResolver(checkoutSchema),
@@ -150,8 +175,10 @@ export const CheckoutForm = () => {
             const { data: response, error: invokeError } = await supabase.functions.invoke('create-pagarme-subscription', {
                 body: {
                     user_id: userId || null,
-                    plan_id: "plan_R5oAGgCBKfvYANlr",
-                    redirect_url: `${window.location.origin}/home`,
+                    plan_id: courseId ? "course_trainer" : "plan_R5oAGgCBKfvYANlr",
+                    course_id: courseId || null,
+                    course_title: courseTitle || null,
+                    redirect_url: courseId ? `${window.location.origin}/curso/${courseId}/assistir` : `${window.location.origin}/home`,
                     is_new_user: !currentUser, // Identifica se a conta acabou de ser criada
                     customer: {
                         name: data.name,

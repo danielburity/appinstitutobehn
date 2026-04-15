@@ -21,7 +21,7 @@ serve(async (req: Request) => {
             throw new Error('Corpo da requisição inválido (JSON esperado)')
         }
 
-        const { plan_id, customer, user_id, redirect_url, is_new_user } = body
+        const { plan_id, customer, user_id, redirect_url, is_new_user, course_id, course_title } = body
 
         if (!plan_id) {
             throw new Error(`Parâmetro obrigatório ausente: plan_id`)
@@ -86,13 +86,24 @@ serve(async (req: Request) => {
 
         // --- PAYLOAD DEFINITIVO: CRIANDO PEDIDO (ORDER) COM CHECKOUT ---
         // A API de Orders suporta nativamente 'success_url' dentro do objeto 'checkout'
+        
+        let orderAmount = 100; // R$ 1,00 default
+        let orderDescription = "Assinatura Anual Premium";
+        let orderCode = "plan_premium_anual";
+
+        if (course_id) {
+            orderDescription = course_title ? `Compra de Curso: ${course_title}` : "Compra de Curso Individual";
+            orderCode = `course_${course_id}`;
+            orderAmount = 100; // R$ 1,00 para o Trainer
+        }
+        
         const orderPayload = {
             items: [
                 {
-                    amount: 100, // R$ 1,00
-                    description: "Assinatura Anual Premium",
+                    amount: orderAmount,
+                    description: orderDescription,
                     quantity: 1,
-                    code: "plan_premium_anual"
+                    code: orderCode
                 }
             ],
             customer: cleanCustomer,
@@ -119,7 +130,8 @@ serve(async (req: Request) => {
             metadata: {
                 user_id: user_id,
                 customer_email: cleanCustomer.email,
-                flow: "v5_order_hosted_checkout"
+                flow: course_id ? "course_sale" : "v5_order_hosted_checkout",
+                course_id: course_id || null
             }
         }
 

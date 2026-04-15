@@ -110,8 +110,31 @@ serve(async (req: Request) => {
         return new Response(JSON.stringify({ message: 'Payment ignored: No user found', email: customerEmail }), { status: 200 })
       }
 
-      console.log(`[WEBHOOK] [SUCESSO] Tentando ativar usuário: ${finalUserId} (${customerEmail || 'N/A'}) via evento ${eventType}`)
+      console.log(`[WEBHOOK] [SUCESSO] Recebido pagamento de ${finalUserId} (${customerEmail || 'N/A'}) via evento ${eventType}`)
+      
+      // Checa metadados para ver se é venda de curso individual
+      const metadata = data.metadata || body.data?.metadata || body.metadata || {};
+      const isCourseSale = metadata.flow === "course_sale" || Boolean(metadata.course_id);
 
+      if (isCourseSale) {
+        const courseId = metadata.course_id;
+        console.log(`[WEBHOOK] [CURSO] Venda de curso isolado identificada! Curso ID: ${courseId}`);
+        
+        if (courseId) {
+          const { error: insertError } = await supabase
+            .from('user_courses')
+            .upsert({ user_id: finalUserId, course_id: parseInt(courseId, 10) }, { onConflict: 'user_id,course_id' });
+          
+          if (insertError) {
+            console.error(`[WEBHOOK] [ERRO DB] Falha ao matricular ${finalUserId} no curso ${courseId}:`, insertError.message);
+            return new Response(JSON.stringify({ error: insertError.message }), { status: 500 });
+          }
+          console.log(`[WEBHOOK] [OK] Usuário ${finalUserId} matriculado com sucesso no curso ${courseId}.`);
+          return new Response(JSON.stringify({ message: 'Course Sale Success', user_id: finalUserId, course_id: courseId }), { status: 200 });
+        }
+      }
+
+      console.log(`[WEBHOOK] [ASSINATURA] Ativando assinatura global para: ${finalUserId}`);
       const { data: updateData, error } = await supabase
         .from('profiles')
         .update({

@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Check, CreditCard, Shield, Zap, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckoutForm } from "@/components/subscription/CheckoutForm";
@@ -9,6 +10,16 @@ import { CheckoutForm } from "@/components/subscription/CheckoutForm";
 const Subscription = () => {
     console.log("Subscription page mounted");
     const [showCheckout, setShowCheckout] = useState(false);
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const courseId = searchParams.get("course_id");
+    const courseTitle = searchParams.get("course_title");
+
+    React.useEffect(() => {
+        if (courseId) {
+            setShowCheckout(true);
+        }
+    }, [courseId]);
 
     // Benefícios do plano
     const benefits = [
@@ -23,13 +34,28 @@ const Subscription = () => {
     if (showCheckout) {
         return (
             <div className="container max-w-4xl py-12 px-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <Button
-                    variant="ghost"
-                    onClick={() => setShowCheckout(false)}
-                    className="mb-8 hover:bg-secondary/10"
-                >
-                    ← Voltar aos planos
-                </Button>
+                {!courseId ? (
+                    <Button
+                        variant="ghost"
+                        onClick={() => setShowCheckout(false)}
+                        className="mb-8 hover:bg-secondary/10"
+                    >
+                        ← Voltar aos planos
+                    </Button>
+                ) : (
+                    <div className="mb-8 flex items-center justify-between">
+                        <div>
+                            <h2 className="text-2xl font-bold">Compra do Curso</h2>
+                            <p className="text-muted-foreground">{courseTitle || 'Acesso Individual'}</p>
+                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={() => navigate(-1)}
+                        >
+                            Cancelar Compra
+                        </Button>
+                    </div>
+                )}
                 <CheckoutForm />
             </div>
         );

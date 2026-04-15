@@ -270,15 +270,16 @@ const CourseDetail = () => {
           onClick={() => window.open(course.externalUrl, '_blank')}
         >
           <ExternalLink className="w-4 h-4 mr-2" />
-          Comprar Curso
+          Acessar Links Externos
         </Button>
       ) : (
         <Button
-          className="w-full md:w-auto bg-slate-800 text-white cursor-not-allowed opacity-80"
+          className="w-full md:w-auto gradient-primary text-white shadow-xl hover:scale-105 transition-all"
           size="lg"
+          onClick={() => navigate(`/subscription?course_id=${course.id}&course_title=${encodeURIComponent(course.titulo)}`)}
         >
           <Lock className="w-4 h-4 mr-2" />
-          Comprar Curso
+          Comprar Curso (R$ 1,00)
         </Button>
       )}
 
