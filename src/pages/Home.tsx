@@ -7,23 +7,51 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Course, AppEvent } from "@/lib/types";
 import { useSettings } from "@/context/SettingsContext";
+import { useAuth } from "@/context/AuthContext";
 
 const Home = () => {
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { user, isMember, isAdmin } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [events, setEvents] = useState<AppEvent[]>([]);
 
   useEffect(() => {
     async function loadData() {
-      const { data: c } = await supabase.from('courses').select('*').eq('published', true).order('created_at', { ascending: false }).limit(3);
-      if (c) setCourses(c);
+      const { data: allCourses } = await supabase.from('courses').select('*').eq('published', true).order('created_at', { ascending: false });
+      
+      let userCoursesIds: number[] = [];
+      if (user) {
+         const { data: userCourses } = await supabase.from('user_courses').select('course_id').eq('user_id', user.id);
+         if (userCourses) {
+             userCoursesIds = userCourses.map(uc => uc.course_id);
+         }
+      }
+
+      if (allCourses) {
+         const sortedCourses = [...allCourses].sort((a, b) => {
+             const aIsAfiliados = a.slug === 'afiliados-instituto-behn';
+             const bIsAfiliados = b.slug === 'afiliados-instituto-behn';
+             
+             if (aIsAfiliados && !bIsAfiliados) return -1;
+             if (!aIsAfiliados && bIsAfiliados) return 1;
+
+             const aHasAccess = isAdmin || (aIsAfiliados && isMember) || userCoursesIds.includes(a.id);
+             const bHasAccess = isAdmin || (bIsAfiliados && isMember) || userCoursesIds.includes(b.id);
+
+             if (aHasAccess && !bHasAccess) return -1;
+             if (!aHasAccess && bHasAccess) return 1;
+
+             return 0;
+         });
+         setCourses(sortedCourses.slice(0, 3));
+      }
 
       const { data: e } = await supabase.from('events').select('*').order('date', { ascending: true }).limit(2);
       if (e) setEvents(e);
     }
     loadData();
-  }, []);
+  }, [user, isAdmin, isMember]);
 
   return (
     <div className="space-y-8 pb-20 md:pb-8">

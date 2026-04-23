@@ -628,6 +628,7 @@ export default function Admin() {
                       value={appearanceForm.logoUrl || ''}
                       onChange={(url) => setAppearanceForm({ ...appearanceForm, logoUrl: url })}
                       folder="settings"
+                      bucket="course-content"
                     />
                  </CardContent>
                </Card>
@@ -725,6 +726,7 @@ export default function Admin() {
                       value={courseForm.image_url}
                       onChange={(url) => setCourseForm({ ...courseForm, image_url: url })}
                       folder="courses"
+                      bucket="course-content"
                     />
                     <div className="space-y-2"><Label>Link Vimeo</Label>
                       <Input
@@ -823,6 +825,7 @@ export default function Admin() {
                     value={courseForm.image_url}
                     onChange={(url) => setCourseForm({ ...courseForm, image_url: url })}
                     folder="courses"
+                    bucket="course-content"
                   />
                   <div className="space-y-2"><Label>Link Vídeo (YouTube/Vimeo)</Label>
                     <Input
@@ -904,6 +907,7 @@ export default function Admin() {
                       value={therapistForm.avatar_url}
                       onChange={(url) => setTherapistForm({ ...therapistForm, avatar_url: url })}
                       folder="therapists"
+                      bucket="avatars"
                     />
                     <div className="flex items-center gap-2">
                       <input type="checkbox" checked={therapistForm.selo_approved} onChange={e => setTherapistForm({ ...therapistForm, selo_approved: e.target.checked })} />
@@ -974,6 +978,7 @@ export default function Admin() {
                     value={therapistForm.avatar_url}
                     onChange={(url) => setTherapistForm({ ...therapistForm, avatar_url: url })}
                     folder="therapists"
+                    bucket="avatars"
                   />
                   {therapistForm.avatar_url && (
                     <p className="text-[10px] text-muted-foreground break-all bg-muted p-1 rounded">
@@ -1015,6 +1020,7 @@ export default function Admin() {
                       value={eventForm.image_url}
                       onChange={(url) => setEventForm({ ...eventForm, image_url: url })}
                       folder="events"
+                      bucket="course-content"
                     />
                     <div className="space-y-2"><Label>Descrição</Label><Input value={eventForm.description} onChange={e => setEventForm({ ...eventForm, description: e.target.value })} /></div>
                     <div className="space-y-2"><Label>Link Externo (Eventbrite, etc)</Label><Input value={eventForm.external_url} onChange={e => setEventForm({ ...eventForm, external_url: e.target.value })} placeholder="https://..." /></div>
@@ -1071,6 +1077,7 @@ export default function Admin() {
                     value={eventForm.image_url}
                     onChange={(url) => setEventForm({ ...eventForm, image_url: url })}
                     folder="events"
+                    bucket="course-content"
                   />
                   <div className="space-y-2"><Label>Descrição</Label><Input value={eventForm.description} onChange={e => setEventForm({ ...eventForm, description: e.target.value })} /></div>
                   <div className="space-y-2"><Label>Link Externo</Label><Input value={eventForm.external_url} onChange={e => setEventForm({ ...eventForm, external_url: e.target.value })} /></div>
