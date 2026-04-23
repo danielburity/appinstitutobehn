@@ -98,6 +98,9 @@ export default function Admin() {
   const [sendingNotification, setSendingNotification] = useState(false);
   const [grantingAccess, setGrantingAccess] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [createCourseOpen, setCreateCourseOpen] = useState(false);
+  const [createTherapistOpen, setCreateTherapistOpen] = useState(false);
+  const [createEventOpen, setCreateEventOpen] = useState(false);
   const [therapistEditDialogOpen, setTherapistEditDialogOpen] = useState(false);
   const [eventEditDialogOpen, setEventEditDialogOpen] = useState(false);
 
@@ -149,6 +152,7 @@ export default function Admin() {
     else {
       toast.success('Curso criado!');
       loadData();
+      setCreateCourseOpen(false);
       setCourseForm({
         title: '',
         instructor: '',
@@ -178,6 +182,7 @@ export default function Admin() {
     else {
       toast.success('Terapeuta criado!');
       loadData();
+      setCreateTherapistOpen(false);
       setTherapistForm({ name: '', city: '', state: '', postal_code: '', specialties: '', selo_approved: false, gender: 'female', avatar_url: '', rating: '', contact_whatsapp: '' });
     }
   }
@@ -194,6 +199,7 @@ export default function Admin() {
     else {
       toast.success('Evento criado!');
       loadData();
+      setCreateEventOpen(false);
       setEventForm({ title: '', date: '', type: 'online', featured: false, external_url: '', image_url: '', description: '', category: '', location: '' });
     }
   }
@@ -706,7 +712,7 @@ export default function Admin() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h2 className="text-xl font-bold">Gerenciar Cursos</h2>
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <Dialog>
+                <Dialog open={createCourseOpen} onOpenChange={setCreateCourseOpen}>
                   <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" /> Novo Curso</Button></DialogTrigger>
                 <DialogContent className="max-h-[80vh] overflow-y-auto">
                   <DialogHeader><DialogTitle>Novo Curso</DialogTitle></DialogHeader>
@@ -870,7 +876,7 @@ export default function Admin() {
           <TabsContent value="therapists" className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h2 className="text-xl font-bold">Gerenciar Terapeutas</h2>
-              <Dialog>
+              <Dialog open={createTherapistOpen} onOpenChange={setCreateTherapistOpen}>
                 <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" /> Novo Terapeuta</Button></DialogTrigger>
                 <DialogContent>
                   <DialogHeader><DialogTitle>Novo Terapeuta</DialogTitle></DialogHeader>
@@ -994,7 +1000,7 @@ export default function Admin() {
           <TabsContent value="events" className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h2 className="text-xl font-bold">Gerenciar Eventos</h2>
-              <Dialog>
+              <Dialog open={createEventOpen} onOpenChange={setCreateEventOpen}>
                 <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" /> Novo Evento</Button></DialogTrigger>
                 <DialogContent>
                   <DialogHeader><DialogTitle>Novo Evento</DialogTitle></DialogHeader>

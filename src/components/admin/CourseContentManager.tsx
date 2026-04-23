@@ -25,6 +25,7 @@ export function CourseContentManager({ course, onBack }: CourseContentManagerPro
     const [editingLesson, setEditingLesson] = useState<{ lesson?: Lesson, moduleId: string } | null>(null);
     const [moduleDialog, setModuleDialog] = useState<{ open: boolean, mode: 'create' | 'edit', initialTitle?: string, id?: string }>({ open: false, mode: 'create' });
     const [moduleTitle, setModuleTitle] = useState("");
+    const [expandedModuleId, setExpandedModuleId] = useState<string | undefined>(undefined);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -109,11 +110,18 @@ export function CourseContentManager({ course, onBack }: CourseContentManagerPro
 
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
+        if (!over || active.id === over.id) return;
 
-        if (active.id !== over?.id) {
+        const activeId = String(active.id);
+        const overId = String(over.id);
+
+        if (activeId.startsWith('module-') && overId.startsWith('module-')) {
+            const activeModuleId = activeId.replace('module-', '');
+            const overModuleId = overId.replace('module-', '');
+
             setModules((items) => {
-                const oldIndex = items.findIndex((item) => item.id === active.id);
-                const newIndex = items.findIndex((item) => item.id === over?.id);
+                const oldIndex = items.findIndex((item) => item.id === activeModuleId);
+                const newIndex = items.findIndex((item) => item.id === overModuleId);
 
                 const newItems = arrayMove(items, oldIndex, newIndex);
 
@@ -122,6 +130,32 @@ export function CourseContentManager({ course, onBack }: CourseContentManagerPro
                     await supabase.from('modules').update({ order: index }).eq('id', item.id);
                 });
 
+                return newItems;
+            });
+        } else if (activeId.startsWith('lesson-') && overId.startsWith('lesson-')) {
+            const activeLessonId = activeId.replace('lesson-', '');
+            const overLessonId = overId.replace('lesson-', '');
+
+            setModules((items) => {
+                // Find which module contains the active lesson
+                const moduleIndex = items.findIndex(m => m.lessons?.some(l => l.id === activeLessonId));
+                if (moduleIndex === -1) return items;
+
+                const mod = items[moduleIndex];
+                const oldIndex = mod.lessons.findIndex(l => l.id === activeLessonId);
+                const newIndex = mod.lessons.findIndex(l => l.id === overLessonId);
+
+                if (oldIndex === -1 || newIndex === -1) return items;
+
+                const newLessons = arrayMove(mod.lessons, oldIndex, newIndex);
+                
+                // Persist order to DB
+                newLessons.forEach(async (lesson, index) => {
+                    await supabase.from('lessons').update({ order: index }).eq('id', lesson.id);
+                });
+
+                const newItems = [...items];
+                newItems[moduleIndex] = { ...mod, lessons: newLessons };
                 return newItems;
             });
         }
@@ -220,10 +254,14 @@ export function CourseContentManager({ course, onBack }: CourseContentManagerPro
                     moduleId={editingLesson.moduleId}
                     lesson={editingLesson.lesson}
                     onSave={() => {
+                        setExpandedModuleId(editingLesson.moduleId);
                         setEditingLesson(null);
                         loadModules();
                     }}
-                    onCancel={() => setEditingLesson(null)}
+                    onCancel={() => {
+                        setExpandedModuleId(editingLesson.moduleId);
+                        setEditingLesson(null);
+                    }}
                 />
             </div>
         );
@@ -266,12 +304,18 @@ export function CourseContentManager({ course, onBack }: CourseContentManagerPro
                         onDragEnd={handleDragEnd}
                     >
                         <SortableContext
-                            items={modules.map(m => m.id)}
+                            items={modules.map(m => `module-${m.id}`)}
                             strategy={verticalListSortingStrategy}
                         >
-                            <Accordion type="single" collapsible className="w-full space-y-4">
+                            <Accordion 
+                                type="single" 
+                                collapsible 
+                                className="w-full space-y-4"
+                                value={expandedModuleId}
+                                onValueChange={setExpandedModuleId}
+                            >
                                 {modules.map((module) => (
-                                    <SortableItem key={module.id} id={module.id}>
+                                    <SortableItem key={`module-${module.id}`} id={`module-${module.id}`}>
                                         {({ attributes, listeners }) => (
                                             <AccordionItem value={module.id} className="border rounded-lg bg-card px-4">
                                                 <div className="flex items-center py-4">
@@ -298,22 +342,36 @@ export function CourseContentManager({ course, onBack }: CourseContentManagerPro
                                                 </div>
 
                                                 <AccordionContent className="pt-2 pb-4 space-y-2">
-                                                    {module.lessons?.map((lesson) => (
-                                                        <div key={lesson.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md group hover:bg-muted transition-colors">
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="text-sm font-medium">{lesson.title}</span>
-                                                                {!lesson.visible && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">Oculta</span>}
-                                                            </div>
-                                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <Button size="sm" variant="ghost" onClick={() => setEditingLesson({ moduleId: module.id, lesson })}>
-                                                                    <Edit2 className="w-4 h-4" />
-                                                                </Button>
-                                                                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteLesson(lesson.id)}>
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </Button>
-                                                            </div>
+                                                    <SortableContext
+                                                        items={module.lessons?.map(l => `lesson-${l.id}`) || []}
+                                                        strategy={verticalListSortingStrategy}
+                                                    >
+                                                        <div className="space-y-2">
+                                                            {module.lessons?.map((lesson) => (
+                                                                <SortableItem key={`lesson-${lesson.id}`} id={`lesson-${lesson.id}`}>
+                                                                    {({ attributes: lessonAttrs, listeners: lessonListeners }) => (
+                                                                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md group hover:bg-muted transition-colors border border-transparent hover:border-border">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <div {...lessonAttrs} {...lessonListeners} className="cursor-grab text-muted-foreground hover:text-foreground">
+                                                                                    <GripVertical className="w-4 h-4" />
+                                                                                </div>
+                                                                                <span className="text-sm font-medium">{lesson.title}</span>
+                                                                                {!lesson.visible && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">Oculta</span>}
+                                                                            </div>
+                                                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                                <Button size="sm" variant="ghost" onClick={() => setEditingLesson({ moduleId: module.id, lesson })}>
+                                                                                    <Edit2 className="w-4 h-4" />
+                                                                                </Button>
+                                                                                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteLesson(lesson.id)}>
+                                                                                    <Trash2 className="w-4 h-4" />
+                                                                                </Button>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </SortableItem>
+                                                            ))}
                                                         </div>
-                                                    ))}
+                                                    </SortableContext>
 
                                                     <Button
                                                         variant="outline"
