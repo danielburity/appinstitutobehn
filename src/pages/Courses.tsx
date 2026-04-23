@@ -17,7 +17,15 @@ const Courses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const filtros = ["Todos", "Iniciante", "Avançado", "Novo", "Popular"];
+  const filtros = useMemo(() => {
+    const badges = new Set<string>();
+    courses.forEach(c => {
+      if (c.badge && c.badge.trim() !== '') {
+        badges.add(c.badge.trim());
+      }
+    });
+    return ["Todos", ...Array.from(badges).sort()];
+  }, [courses]);
 
   useEffect(() => {
     async function fetchCourses() {
@@ -80,19 +88,14 @@ const Courses = () => {
           if (courses.length === 0) return <p>Nenhum curso encontrado.</p>;
 
           const normalize = (s: string) => s.toLowerCase();
-          const getHours = (duracao: string) => {
-            const match = duracao.match(/(\d+)h/);
-            return match ? parseInt(match[1], 10) : 0;
-          };
 
           let list = courses.filter((c) =>
             normalize(c.title).includes(normalize(query)) || normalize(c.instructor).includes(normalize(query)),
           );
 
-          if (filtroAtivo === "Novo") list = list.filter((c) => c.badge === "Novo");
-          if (filtroAtivo === "Popular") list = list.filter((c) => c.badge === "Popular");
-          if (filtroAtivo === "Iniciante") list = list.filter((c) => getHours(c.duration) <= 7);
-          if (filtroAtivo === "Avançado") list = list.filter((c) => getHours(c.duration) > 7);
+          if (filtroAtivo !== "Todos") {
+            list = list.filter((c) => c.badge?.trim() === filtroAtivo);
+          }
 
           return list.map((curso) => <CourseCard key={curso.id} course={curso} />);
         }, [filtroAtivo, query, courses, loading])}
