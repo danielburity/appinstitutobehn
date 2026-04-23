@@ -127,7 +127,8 @@ const CourseDetail = () => {
           })),
           videoUrl: data.video_url,
           externalUrl: data.external_url,
-          is_premium: data.is_premium
+          is_premium: data.is_premium,
+          price: data.price || 0
         });
 
         // ------------------ CHECAGEM ROBUSTA DE ACESSO (HOTMART STYLE) ------------------
@@ -279,7 +280,7 @@ const CourseDetail = () => {
           onClick={() => navigate(`/assinatura?course_id=${course.id}&course_title=${encodeURIComponent(course.titulo)}`)}
         >
           <Lock className="w-4 h-4 mr-2" />
-          Comprar Curso (R$ 1,00)
+          Comprar Curso {course.price > 0 ? `(R$ ${(course.price / 100).toFixed(2).replace('.', ',')})` : '(R$ 1,00)'}
         </Button>
       )}
 

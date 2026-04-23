@@ -43,6 +43,7 @@ export type Course = {
   created_at?: string;
   video_url?: string;
   external_url?: string;
+  price?: number;
   modules?: Module[];
 };
 

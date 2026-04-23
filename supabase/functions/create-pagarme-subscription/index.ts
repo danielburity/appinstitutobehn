@@ -94,7 +94,28 @@ serve(async (req: Request) => {
         if (course_id) {
             orderDescription = course_title ? `Compra de Curso: ${course_title}` : "Compra de Curso Individual";
             orderCode = `course_${course_id}`;
-            orderAmount = 100; // R$ 1,00 para o Trainer
+            orderAmount = 100; // Fallback para R$ 1,00
+
+            // Buscar preço real do banco de dados para segurança
+            const supabaseUrl = Deno.env.get('SUPABASE_URL');
+            const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
+            if (supabaseUrl && supabaseKey) {
+                try {
+                    const dbResp = await fetch(`${supabaseUrl}/rest/v1/courses?id=eq.${course_id}&select=price`, {
+                        headers: {
+                            'apikey': supabaseKey,
+                            'Authorization': `Bearer ${supabaseKey}`
+                        }
+                    });
+                    const dbData = await dbResp.json();
+                    if (dbData && dbData.length > 0 && dbData[0].price > 0) {
+                        orderAmount = dbData[0].price;
+                        console.log(`[DEBUG] Preço encontrado para o curso ${course_id}: ${orderAmount} centavos`);
+                    }
+                } catch (e) {
+                    console.error("[PRICE FETCH ERROR]", e);
+                }
+            }
         }
         
         const orderPayload = {

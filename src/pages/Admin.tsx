@@ -82,7 +82,8 @@ export default function Admin() {
     video_url: '',
     external_url: '',
     badge: '',
-    learning_outcomes: ''
+    learning_outcomes: '',
+    price: 0
   });
   const [therapistForm, setTherapistForm] = useState({ name: '', city: '', state: '', postal_code: '', specialties: '', selo_approved: false, gender: 'female', avatar_url: '', rating: '', contact_whatsapp: '' });
   const [eventForm, setEventForm] = useState({ title: '', date: '', type: 'online', featured: false, external_url: '', image_url: '', description: '', category: '', location: '' });
@@ -164,7 +165,8 @@ export default function Admin() {
         video_url: '',
         external_url: '',
         badge: '',
-        learning_outcomes: ''
+        learning_outcomes: '',
+        price: 0
       });
     }
   }
@@ -340,7 +342,8 @@ export default function Admin() {
         video_url: '',
         external_url: '',
         badge: '',
-        learning_outcomes: ''
+        learning_outcomes: '',
+        price: 0
       });
     }
   }
@@ -358,7 +361,8 @@ export default function Admin() {
       video_url: course.video_url || '',
       external_url: course.external_url || '',
       badge: course.badge || '',
-      learning_outcomes: course.learning_outcomes?.join(', ') || ''
+      learning_outcomes: course.learning_outcomes?.join(', ') || '',
+      price: course.price || 0
     });
     setEditDialogOpen(true);
   }
@@ -719,6 +723,7 @@ export default function Admin() {
                   <DialogHeader><DialogTitle>Novo Curso</DialogTitle></DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="space-y-2"><Label>Título</Label><Input value={courseForm.title} onChange={e => setCourseForm({ ...courseForm, title: e.target.value })} /></div>
+                    <div className="space-y-2"><Label>Preço Avulso (R$)</Label><Input type="number" step="0.01" value={courseForm.price ? courseForm.price / 100 : ''} onChange={e => setCourseForm({ ...courseForm, price: Math.round(parseFloat(e.target.value || '0') * 100) })} placeholder="Ex: 99.90" /></div>
                     <div className="space-y-2"><Label>Instrutor</Label><Input value={courseForm.instructor} onChange={e => setCourseForm({ ...courseForm, instructor: e.target.value })} /></div>
                     <div className="space-y-2"><Label>Duração</Label><Input value={courseForm.duration} onChange={e => setCourseForm({ ...courseForm, duration: e.target.value })} /></div>
                     <ImageUpload
@@ -818,6 +823,7 @@ export default function Admin() {
                 <DialogHeader><DialogTitle>Editar Curso</DialogTitle></DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2"><Label>Título</Label><Input value={courseForm.title} onChange={e => setCourseForm({ ...courseForm, title: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>Preço Avulso (R$)</Label><Input type="number" step="0.01" value={courseForm.price ? courseForm.price / 100 : ''} onChange={e => setCourseForm({ ...courseForm, price: Math.round(parseFloat(e.target.value || '0') * 100) })} placeholder="Ex: 99.90" /></div>
                   <div className="space-y-2"><Label>Instrutor</Label><Input value={courseForm.instructor} onChange={e => setCourseForm({ ...courseForm, instructor: e.target.value })} /></div>
                   <div className="space-y-2"><Label>Duração</Label><Input value={courseForm.duration} onChange={e => setCourseForm({ ...courseForm, duration: e.target.value })} /></div>
                   <ImageUpload
