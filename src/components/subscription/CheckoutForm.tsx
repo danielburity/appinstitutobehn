@@ -26,6 +26,7 @@ export const CheckoutForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [step, setStep] = useState(1);
     const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+    const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
     const [listeningUserId, setListeningUserId] = useState<string | null>(null);
     const [searchParams] = useSearchParams();
     const courseId = searchParams.get("course_id");
@@ -201,7 +202,14 @@ export const CheckoutForm = () => {
 
             if (response?.url) {
                 // SUCESSO: Abrir link e iniciar escuta
-                window.open(response.url, '_blank');
+                setPaymentUrl(response.url);
+                // Tentativa de abrir em nova aba. Em celulares pode ser bloqueado pelo bloqueador de popups.
+                const newWindow = window.open(response.url, '_blank');
+                if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                    // O popup foi bloqueado. O botão manual na próxima tela será a solução.
+                    toast.warning("Pop-up bloqueado. Clique no botão na tela para abrir o pagamento.", { duration: 5000 });
+                }
+                
                 setListeningUserId(userId || null);
                 setIsCheckingPayment(true); // Muda a tela para "Aguardando..."
                 setStep(2); // Opcional, se quisermos usar steps
@@ -249,10 +257,26 @@ export const CheckoutForm = () => {
                         </div>
                     </div>
 
+                    {paymentUrl && (
+                        <div className="pt-4 border-t border-border/50">
+                            <p className="text-xs text-muted-foreground mb-3 font-bold">
+                                A janela não abriu ou você fechou sem querer?
+                            </p>
+                            <Button
+                                asChild
+                                className="w-full h-12 text-sm font-black rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 shadow-lg hover:shadow-blue-500/20 active:scale-[0.98] transition-all"
+                            >
+                                <a href={paymentUrl} target="_blank" rel="noopener noreferrer">
+                                    IR PARA PÁGINA DE PAGAMENTO <Lock className="w-4 h-4 ml-1" />
+                                </a>
+                            </Button>
+                        </div>
+                    )}
+
                     <Button
                         variant="outline"
                         onClick={() => window.location.reload()}
-                        className="w-full border-primary/20 hover:bg-primary/5 hover:text-primary transition-colors"
+                        className="w-full border-primary/20 hover:bg-primary/5 hover:text-primary transition-colors mt-4"
                     >
                         Já paguei, mas não atualizou
                     </Button>
