@@ -133,7 +133,9 @@ serve(async (req: Request) => {
                     payment_method: "checkout",
                     checkout: {
                         expires_in: 3600,
-                        skip_checkout_success_page: true,
+                        // skip_checkout_success_page removido: para PIX, a tela de sucesso DO Pagar.me
+                        // é onde o QR Code é exibido. Removendo isso, o Pagar.me mostra o QR Code
+                        // corretamente. O webhook libera o acesso automaticamente após confirmação.
                         success_url: redirect_url || "https://instituto-behn.vercel.app",
                         accepted_payment_methods: ["credit_card", "pix"],
                         credit_card: {
