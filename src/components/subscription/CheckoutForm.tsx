@@ -201,18 +201,16 @@ export const CheckoutForm = () => {
             if (response?.error) throw new Error(response.error.message);
 
             if (response?.url) {
-                // SUCESSO: Abrir link e iniciar escuta
+                // SUCESSO: Redirecionar na mesma janela (resolve bloqueio de popup em mobile/Safari)
                 setPaymentUrl(response.url);
-                // Tentativa de abrir em nova aba. Em celulares pode ser bloqueado pelo bloqueador de popups.
-                const newWindow = window.open(response.url, '_blank');
-                if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-                    // O popup foi bloqueado. O botão manual na próxima tela será a solução.
-                    toast.warning("Pop-up bloqueado. Clique no botão na tela para abrir o pagamento.", { duration: 5000 });
-                }
-                
                 setListeningUserId(userId || null);
-                setIsCheckingPayment(true); // Muda a tela para "Aguardando..."
-                setStep(2); // Opcional, se quisermos usar steps
+                setIsCheckingPayment(true); // Mostra tela de redirecionamento
+                setStep(2);
+                
+                // Pequeno delay para a tela de "Redirecionando..." aparecer antes de navegar
+                setTimeout(() => {
+                    window.location.href = response.url;
+                }, 1500);
             } else {
                 throw new Error("Não foi possível gerar o link de pagamento. Tente novamente.");
             }
@@ -234,52 +232,27 @@ export const CheckoutForm = () => {
                         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                     </div>
                     <CardTitle className="text-2xl font-black uppercase text-primary tracking-widest">
-                        Aguardando Pagamento...
+                        Redirecionando...
                     </CardTitle>
                     <CardDescription className="font-medium text-lg text-muted-foreground mt-2">
-                        A página de pagamento foi aberta em uma nova aba.
+                        Você será levado para a página de pagamento em instantes.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="text-center space-y-6 pt-4">
                     <p className="text-sm text-balance leading-relaxed text-muted-foreground/80">
-                        Complete o pagamento na aba do Pagar.me. Assim que for confirmado,
-                        esta tela atualizará automaticamente e liberará seu acesso.
+                        Se não for redirecionado automaticamente, clique no botão abaixo.
                     </p>
 
-                    <div className="p-4 bg-background/50 rounded-xl border border-border/50 text-xs text-muted-foreground flex flex-col gap-2">
-                        <div className="flex items-center gap-2 justify-center">
-                            <Lock className="w-3 h-3" />
-                            <span>Monitorando confirmação segura...</span>
-                        </div>
-                        <div className="flex items-center gap-2 justify-center">
-                            <CheckCircle2 className="w-3 h-3" />
-                            <span>Liberação automática em segundos</span>
-                        </div>
-                    </div>
-
                     {paymentUrl && (
-                        <div className="pt-4 border-t border-border/50">
-                            <p className="text-xs text-muted-foreground mb-3 font-bold">
-                                A janela não abriu ou você fechou sem querer?
-                            </p>
-                            <Button
-                                asChild
-                                className="w-full h-12 text-sm font-black rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 shadow-lg hover:shadow-blue-500/20 active:scale-[0.98] transition-all"
-                            >
-                                <a href={paymentUrl} target="_blank" rel="noopener noreferrer">
-                                    IR PARA PÁGINA DE PAGAMENTO <Lock className="w-4 h-4 ml-1" />
-                                </a>
-                            </Button>
-                        </div>
+                        <Button
+                            asChild
+                            className="w-full h-12 text-sm font-black rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all"
+                        >
+                            <a href={paymentUrl} rel="noopener noreferrer">
+                                IR PARA PÁGINA DE PAGAMENTO <Lock className="w-4 h-4 ml-1" />
+                            </a>
+                        </Button>
                     )}
-
-                    <Button
-                        variant="outline"
-                        onClick={() => window.location.reload()}
-                        className="w-full border-primary/20 hover:bg-primary/5 hover:text-primary transition-colors mt-4"
-                    >
-                        Já paguei, mas não atualizou
-                    </Button>
                 </CardContent>
             </Card>
         )

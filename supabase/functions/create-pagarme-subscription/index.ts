@@ -139,7 +139,7 @@ serve(async (req: Request) => {
                         credit_card: {
                             operation_type: "auth_and_capture",
                             installments: [
-                                { number: 1, total: 100 }
+                                { number: 1, total: orderAmount }
                             ]
                         },
                         pix: {
