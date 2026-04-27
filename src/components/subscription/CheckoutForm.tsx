@@ -47,7 +47,7 @@ export const CheckoutForm = () => {
     // Fetch course price to show accurate per-installment values
     useEffect(() => {
         if (!courseId) {
-            setCoursePrice(9990); // R$ 99,90 in cents
+            setCoursePrice(180000); // R$ 1.800,00 em centavos — Plataforma + Afiliados Behn
             return;
         }
         supabase

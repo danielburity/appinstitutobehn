@@ -90,8 +90,8 @@ const Subscription = () => {
                             APP INSTITUTO BEHN
                         </CardDescription>
                         <div className="mt-6 flex flex-col items-center">
-                            <span className="text-5xl font-black">R$ 99,90</span>
-                            <span className="text-muted-foreground text-sm font-medium mt-1">por mês</span>
+                            <span className="text-5xl font-black">R$ 1.800</span>
+                            <span className="text-muted-foreground text-sm font-medium mt-1">à vista ou 12× de R$ 150,00</span>
                         </div>
                     </CardHeader>
 

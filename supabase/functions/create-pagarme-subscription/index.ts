@@ -90,8 +90,8 @@ serve(async (req: Request) => {
         // --- PAYLOAD DEFINITIVO: CRIANDO PEDIDO (ORDER) COM CHECKOUT ---
         // A API de Orders suporta nativamente 'success_url' dentro do objeto 'checkout'
         
-        let orderAmount = 100; // R$ 1,00 default
-        let orderDescription = "Assinatura Anual Premium";
+        let orderAmount = 180000; // R$ 1.800,00 — Acesso Plataforma + Afiliados Behn
+        let orderDescription = "Acesso à Plataforma Instituto Behn + Curso Afiliados";
         let orderCode = "plan_premium_anual";
 
         if (course_id) {
