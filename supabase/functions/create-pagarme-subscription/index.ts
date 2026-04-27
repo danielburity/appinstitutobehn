@@ -21,7 +21,10 @@ serve(async (req: Request) => {
             throw new Error('Corpo da requisição inválido (JSON esperado)')
         }
 
-        const { plan_id, customer, user_id, redirect_url, is_new_user, course_id, course_title } = body
+        const { plan_id, customer, user_id, redirect_url, is_new_user, course_id, course_title, installments } = body
+
+        // Number of installments chosen by the user (1 to maxInstallments)
+        const chosenInstallments = Math.max(1, parseInt(String(installments || 1)))
 
         if (!plan_id) {
             throw new Error(`Parâmetro obrigatório ausente: plan_id`)
@@ -140,9 +143,10 @@ serve(async (req: Request) => {
                         accepted_payment_methods: ["credit_card", "pix"],
                         credit_card: {
                             operation_type: "auth_and_capture",
-                            installments: [
-                                { number: 1, total: orderAmount }
-                            ]
+                            installments: Array.from({ length: chosenInstallments }, (_, i) => ({
+                                number: i + 1,
+                                total: orderAmount
+                            }))
                         },
                         pix: {
                             expires_in: 3600

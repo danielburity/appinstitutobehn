@@ -1,10 +1,10 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useSearchParams } from "react-router-dom";
-import { User, Mail, FileText, Phone, Lock, CheckCircle2, QrCode } from "lucide-react";
+import { User, Mail, FileText, Phone, Lock, CheckCircle2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,15 +22,51 @@ const checkoutSchema = z.object({
 
 type CheckoutData = z.infer<typeof checkoutSchema>;
 
+// Helper: builds installment array for Pagar.me
+const buildInstallments = (maxInstallments: number, totalAmount: number) =>
+    Array.from({ length: maxInstallments }, (_, i) => ({
+        number: i + 1,
+        total: totalAmount
+    }));
+
 export const CheckoutForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [step, setStep] = useState(1);
     const [isCheckingPayment, setIsCheckingPayment] = useState(false);
     const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
     const [listeningUserId, setListeningUserId] = useState<string | null>(null);
+    const [installments, setInstallments] = useState(1);
+    const [coursePrice, setCoursePrice] = useState<number | null>(null);
     const [searchParams] = useSearchParams();
     const courseId = searchParams.get("course_id");
     const courseTitle = searchParams.get("course_title");
+
+    // Max installments: 12x for platform, 10x for individual courses
+    const maxInstallments = courseId ? 10 : 12;
+
+    // Fetch course price to show accurate per-installment values
+    useEffect(() => {
+        if (!courseId) {
+            setCoursePrice(9990); // R$ 99,90 in cents
+            return;
+        }
+        supabase
+            .from('courses')
+            .select('price')
+            .eq('id', courseId)
+            .single()
+            .then(({ data }) => {
+                if (data?.price && data.price > 0) setCoursePrice(data.price);
+                else setCoursePrice(100); // fallback R$ 1,00
+            });
+    }, [courseId]);
+
+    const formatCurrency = (cents: number) =>
+        `R$ ${(cents / 100).toFixed(2).replace('.', ',')}`;
+
+    const pricePerInstallment = coursePrice
+        ? coursePrice / installments
+        : null;
 
     // Efeito para escutar a aprovação do pagamento em tempo real
     React.useEffect(() => {
@@ -171,7 +207,7 @@ export const CheckoutForm = () => {
                 if (userId) toast.success("Processando link de pagamento...");
             }
 
-            console.log(`[CHECKOUT] Chamando Pagar.me para User: ${userId || 'Visitante'}`);
+            console.log(`[CHECKOUT] Chamando Pagar.me para User: ${userId || 'Visitante'} | Parcelas: ${installments}x`);
 
             const { data: response, error: invokeError } = await supabase.functions.invoke('create-pagarme-subscription', {
                 body: {
@@ -179,8 +215,9 @@ export const CheckoutForm = () => {
                     plan_id: courseId ? "course_trainer" : "plan_R5oAGgCBKfvYANlr",
                     course_id: courseId || null,
                     course_title: courseTitle || null,
+                    installments: installments,
                     redirect_url: courseId ? `${window.location.origin}/curso/${courseId}/assistir` : `${window.location.origin}/home`,
-                    is_new_user: !currentUser, // Identifica se a conta acabou de ser criada
+                    is_new_user: !currentUser,
                     customer: {
                         name: data.name,
                         email: data.email,
@@ -259,7 +296,60 @@ export const CheckoutForm = () => {
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
+            {/* ── Seletor de Parcelamento ── */}
+            <div className="space-y-3">
+                <Label className="text-xs font-black uppercase tracking-widest text-primary/60 flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    Parcelamento no Cartão de Crédito
+                </Label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {Array.from({ length: maxInstallments }, (_, i) => {
+                        const n = i + 1;
+                        const perInstallment = coursePrice ? coursePrice / n : null;
+                        return (
+                            <button
+                                type="button"
+                                key={n}
+                                onClick={() => setInstallments(n)}
+                                className={`relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all text-center cursor-pointer ${
+                                    installments === n
+                                        ? 'border-primary bg-primary/10 shadow-md shadow-primary/20 scale-[1.04]'
+                                        : 'border-border/50 bg-accent/5 hover:border-primary/40 hover:bg-primary/5'
+                                }`}
+                            >
+                                <span className={`text-base font-black leading-none ${
+                                    installments === n ? 'text-primary' : 'text-foreground'
+                                }`}>{n}×</span>
+                                {perInstallment !== null && (
+                                    <span className={`text-[10px] font-semibold mt-1 leading-tight ${
+                                        installments === n ? 'text-primary/80' : 'text-muted-foreground'
+                                    }`}>
+                                        {formatCurrency(perInstallment)}
+                                    </span>
+                                )}
+                                {installments === n && (
+                                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+                {coursePrice && (
+                    <p className="text-xs text-muted-foreground text-center">
+                        {installments === 1
+                            ? `Pagamento à vista de ${formatCurrency(coursePrice)}`
+                            : `${installments}× de ${formatCurrency(coursePrice / installments)} = ${formatCurrency(coursePrice)} no total`
+                        }
+                    </p>
+                )}
+            </div>
+
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-primary/60">Nome Completo</Label>
