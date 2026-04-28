@@ -56,7 +56,7 @@ const Subscription = () => {
                         </Button>
                     </div>
                 )}
-                <CheckoutForm showInstallmentPicker={true} />
+                <CheckoutForm />
             </div>
         );
     }
