@@ -1,17 +1,19 @@
 
 import React, { useState } from "react";
-import { Check, CreditCard, Shield, Zap, Sparkles, ArrowRight } from "lucide-react";
+import { Check, Shield, Zap, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckoutForm } from "@/components/subscription/CheckoutForm";
+import { useSettings } from "@/context/SettingsContext";
 
 const Subscription = () => {
     console.log("Subscription page mounted");
     const [showCheckout, setShowCheckout] = useState(false);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { settings } = useSettings();
     const courseId = searchParams.get("course_id");
     const courseTitle = searchParams.get("course_title");
 
@@ -21,15 +23,14 @@ const Subscription = () => {
         }
     }, [courseId]);
 
-    // Benefícios do plano
     const benefits = [
-        "Acesso ilimitado a todos os cursos",
-        "Participação em eventos exclusivos",
-        "Materiais de apoio para download",
-        "Suporte prioritário via WhatsApp",
-        "Certificados de conclusão",
-        "Conteúdos novos toda semana"
-    ];
+        settings.subscriptionBenefit1,
+        settings.subscriptionBenefit2,
+        settings.subscriptionBenefit3,
+        settings.subscriptionBenefit4,
+        settings.subscriptionBenefit5,
+        settings.subscriptionBenefit6,
+    ].filter(Boolean);
 
     if (showCheckout) {
         return (
@@ -76,8 +77,8 @@ const Subscription = () => {
             </div>
 
             <div className="max-w-md mx-auto relative">
-                {/* Efeito de brilho atrás do card */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary via-secondary to-accent-blue rounded-[2rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                {/* Glow behind card */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary via-secondary to-accent-blue rounded-[2rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
 
                 <Card className="relative border-border/50 bg-card/50 backdrop-blur-xl shadow-2xl rounded-[1.5rem] overflow-hidden">
                     <div className="absolute top-0 right-0 p-6">
@@ -85,13 +86,13 @@ const Subscription = () => {
                     </div>
 
                     <CardHeader className="text-center pt-10">
-                        <CardTitle className="text-2xl font-bold">Plano Mensal</CardTitle>
+                        <CardTitle className="text-2xl font-bold">{settings.subscriptionPlanName}</CardTitle>
                         <CardDescription className="text-primary font-medium tracking-wide">
                             APP INSTITUTO BEHN
                         </CardDescription>
                         <div className="mt-6 flex flex-col items-center">
-                            <span className="text-5xl font-black">R$ 1.800</span>
-                            <span className="text-muted-foreground text-sm font-medium mt-1">à vista ou 12× de R$ 150,00</span>
+                            <span className="text-5xl font-black">{settings.subscriptionPrice}</span>
+                            <span className="text-muted-foreground text-sm font-medium mt-1">{settings.subscriptionInstallments}</span>
                         </div>
                     </CardHeader>
 
@@ -119,7 +120,7 @@ const Subscription = () => {
                     </CardFooter>
                 </Card>
 
-                {/* Informação de segurança */}
+                {/* Security badges */}
                 <div className="mt-8 flex items-center justify-center gap-6 text-muted-foreground/60">
                     <div className="flex items-center gap-2">
                         <Shield className="w-4 h-4" />

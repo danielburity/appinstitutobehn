@@ -104,10 +104,97 @@ export default function Admin() {
   const [createEventOpen, setCreateEventOpen] = useState(false);
   const [therapistEditDialogOpen, setTherapistEditDialogOpen] = useState(false);
   const [eventEditDialogOpen, setEventEditDialogOpen] = useState(false);
+  const [savingTexts, setSavingTexts] = useState(false);
+  const [textsForm, setTextsForm] = useState({
+    heroBadgeText: settings.heroBadgeText || '',
+    heroTitle: settings.heroTitle || '',
+    heroSubtitle: settings.heroSubtitle || '',
+    heroCta1: settings.heroCta1 || '',
+    heroCta2: settings.heroCta2 || '',
+    feature1Title: settings.feature1Title || '',
+    feature1Desc: settings.feature1Desc || '',
+    feature2Title: settings.feature2Title || '',
+    feature2Desc: settings.feature2Desc || '',
+    feature3Title: settings.feature3Title || '',
+    feature3Desc: settings.feature3Desc || '',
+    platformTitle: settings.platformTitle || '',
+    platformSubtitle: settings.platformSubtitle || '',
+    platformBullet1: settings.platformBullet1 || '',
+    platformBullet2: settings.platformBullet2 || '',
+    platformBullet3: settings.platformBullet3 || '',
+    platformBullet4: settings.platformBullet4 || '',
+    pricingSectionTitle: settings.pricingSectionTitle || '',
+    pricingSectionSubtitle: settings.pricingSectionSubtitle || '',
+    pricingBadge: settings.pricingBadge || '',
+    pricingPlanName: settings.pricingPlanName || '',
+    pricingPlanDesc: settings.pricingPlanDesc || '',
+    pricingValue: settings.pricingValue || '',
+    pricingInstallments: settings.pricingInstallments || '',
+    pricingBenefit1: settings.pricingBenefit1 || '',
+    pricingBenefit2: settings.pricingBenefit2 || '',
+    pricingBenefit3: settings.pricingBenefit3 || '',
+    pricingBenefit4: settings.pricingBenefit4 || '',
+    pricingBenefit5: settings.pricingBenefit5 || '',
+    pricingFormTitle: settings.pricingFormTitle || '',
+    pricingFormSubtitle: settings.pricingFormSubtitle || '',
+    subscriptionPlanName: settings.subscriptionPlanName || '',
+    subscriptionPrice: settings.subscriptionPrice || '',
+    subscriptionInstallments: settings.subscriptionInstallments || '',
+    subscriptionBenefit1: settings.subscriptionBenefit1 || '',
+    subscriptionBenefit2: settings.subscriptionBenefit2 || '',
+    subscriptionBenefit3: settings.subscriptionBenefit3 || '',
+    subscriptionBenefit4: settings.subscriptionBenefit4 || '',
+    subscriptionBenefit5: settings.subscriptionBenefit5 || '',
+    subscriptionBenefit6: settings.subscriptionBenefit6 || '',
+    footerTagline: settings.footerTagline || '',
+  });
 
   // Sync appearance form with context on load
   useEffect(() => {
     setAppearanceForm(settings);
+    setTextsForm({
+      heroBadgeText: settings.heroBadgeText || '',
+      heroTitle: settings.heroTitle || '',
+      heroSubtitle: settings.heroSubtitle || '',
+      heroCta1: settings.heroCta1 || '',
+      heroCta2: settings.heroCta2 || '',
+      feature1Title: settings.feature1Title || '',
+      feature1Desc: settings.feature1Desc || '',
+      feature2Title: settings.feature2Title || '',
+      feature2Desc: settings.feature2Desc || '',
+      feature3Title: settings.feature3Title || '',
+      feature3Desc: settings.feature3Desc || '',
+      platformTitle: settings.platformTitle || '',
+      platformSubtitle: settings.platformSubtitle || '',
+      platformBullet1: settings.platformBullet1 || '',
+      platformBullet2: settings.platformBullet2 || '',
+      platformBullet3: settings.platformBullet3 || '',
+      platformBullet4: settings.platformBullet4 || '',
+      pricingSectionTitle: settings.pricingSectionTitle || '',
+      pricingSectionSubtitle: settings.pricingSectionSubtitle || '',
+      pricingBadge: settings.pricingBadge || '',
+      pricingPlanName: settings.pricingPlanName || '',
+      pricingPlanDesc: settings.pricingPlanDesc || '',
+      pricingValue: settings.pricingValue || '',
+      pricingInstallments: settings.pricingInstallments || '',
+      pricingBenefit1: settings.pricingBenefit1 || '',
+      pricingBenefit2: settings.pricingBenefit2 || '',
+      pricingBenefit3: settings.pricingBenefit3 || '',
+      pricingBenefit4: settings.pricingBenefit4 || '',
+      pricingBenefit5: settings.pricingBenefit5 || '',
+      pricingFormTitle: settings.pricingFormTitle || '',
+      pricingFormSubtitle: settings.pricingFormSubtitle || '',
+      subscriptionPlanName: settings.subscriptionPlanName || '',
+      subscriptionPrice: settings.subscriptionPrice || '',
+      subscriptionInstallments: settings.subscriptionInstallments || '',
+      subscriptionBenefit1: settings.subscriptionBenefit1 || '',
+      subscriptionBenefit2: settings.subscriptionBenefit2 || '',
+      subscriptionBenefit3: settings.subscriptionBenefit3 || '',
+      subscriptionBenefit4: settings.subscriptionBenefit4 || '',
+      subscriptionBenefit5: settings.subscriptionBenefit5 || '',
+      subscriptionBenefit6: settings.subscriptionBenefit6 || '',
+      footerTagline: settings.footerTagline || '',
+    });
   }, [settings]);
 
   // Load Data
@@ -491,6 +578,18 @@ export default function Admin() {
     }
   }
 
+  async function saveTexts() {
+    setSavingTexts(true);
+    try {
+      await updateSettings(textsForm);
+      toast.success('Textos atualizados!', { description: 'As páginas foram atualizadas com sucesso.' });
+    } catch (error: any) {
+      toast.error('Erro ao salvar textos', { description: error.message });
+    } finally {
+      setSavingTexts(false);
+    }
+  }
+
   async function saveAppearance() {
     setSavingAppearance(true);
     try {
@@ -535,6 +634,7 @@ export default function Admin() {
             <TabsTrigger value="events">Eventos</TabsTrigger>
             <TabsTrigger value="notifications">Notificações</TabsTrigger>
             <TabsTrigger value="access">Acessos/Matrícula</TabsTrigger>
+            <TabsTrigger value="texts">Textos das Páginas</TabsTrigger>
             <TabsTrigger value="appearance">Aparência</TabsTrigger>
           </TabsList>
 
@@ -621,6 +721,201 @@ export default function Admin() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* TEXTS TAB */}
+          <TabsContent value="texts" className="space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-4 rounded-lg border shadow-sm">
+              <div>
+                <h2 className="text-xl font-bold">Textos das Páginas</h2>
+                <p className="text-muted-foreground text-sm mt-1">Edite todos os textos visíveis na Landing Page e na página de Assinatura sem precisar tocar no código.</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <Button onClick={() => window.open('/', '_blank')} variant="outline" className="w-full sm:w-auto">Ver Site</Button>
+                <Button onClick={saveTexts} disabled={savingTexts} className="gradient-primary w-full sm:w-auto">
+                  {savingTexts && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Salvar Textos
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+              {/* Hero */}
+              <Card className="lg:col-span-2">
+                <CardContent className="pt-6 space-y-4">
+                  <h3 className="font-bold text-lg border-b pb-2">🏠 Hero (Topo da Landing Page)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Badge / Frase de destaque acima do título</Label>
+                      <Input value={textsForm.heroBadgeText} onChange={e => setTextsForm({...textsForm, heroBadgeText: e.target.value})} placeholder="A Revolução da Mente Começa Aqui" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Botão Primário (CTA 1)</Label>
+                      <Input value={textsForm.heroCta1} onChange={e => setTextsForm({...textsForm, heroCta1: e.target.value})} placeholder="Quero Minha Assinatura Premium" />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Título Principal (use Enter para quebrar linha)</Label>
+                      <textarea className="flex min-h-[70px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={textsForm.heroTitle} onChange={e => setTextsForm({...textsForm, heroTitle: e.target.value})} />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Subtítulo (use Enter para quebrar linha)</Label>
+                      <textarea className="flex min-h-[70px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={textsForm.heroSubtitle} onChange={e => setTextsForm({...textsForm, heroSubtitle: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Botão Secundário (CTA 2)</Label>
+                      <Input value={textsForm.heroCta2} onChange={e => setTextsForm({...textsForm, heroCta2: e.target.value})} placeholder="Ver Planos" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Features / Benefícios */}
+              <Card className="lg:col-span-2">
+                <CardContent className="pt-6 space-y-4">
+                  <h3 className="font-bold text-lg border-b pb-2">✅ Cards de Benefícios (seção #beneficios)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[
+                      { titleKey: 'feature1Title', descKey: 'feature1Desc', label: 'Card 1 — Neurociência' },
+                      { titleKey: 'feature2Title', descKey: 'feature2Desc', label: 'Card 2 — Resultados' },
+                      { titleKey: 'feature3Title', descKey: 'feature3Desc', label: 'Card 3 — Certificação' },
+                    ].map(({ titleKey, descKey, label }) => (
+                      <div key={titleKey} className="space-y-3 p-3 border rounded-lg bg-muted/10">
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">{label}</p>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Título</Label>
+                          <Input value={(textsForm as any)[titleKey]} onChange={e => setTextsForm({...textsForm, [titleKey]: e.target.value})} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Descrição</Label>
+                          <textarea className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={(textsForm as any)[descKey]} onChange={e => setTextsForm({...textsForm, [descKey]: e.target.value})} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Platform section */}
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <h3 className="font-bold text-lg border-b pb-2">🚀 Seção Plataforma (#cursos)</h3>
+                  <div className="space-y-2">
+                    <Label>Título (use \n para nova linha)</Label>
+                    <textarea className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={textsForm.platformTitle} onChange={e => setTextsForm({...textsForm, platformTitle: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Parágrafo de descrição</Label>
+                    <textarea className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={textsForm.platformSubtitle} onChange={e => setTextsForm({...textsForm, platformSubtitle: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase">4 Bullet Points</Label>
+                    {(['platformBullet1','platformBullet2','platformBullet3','platformBullet4'] as const).map((key, i) => (
+                      <Input key={key} value={textsForm[key]} onChange={e => setTextsForm({...textsForm, [key]: e.target.value})} placeholder={`Bullet ${i+1}`} />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Pricing section */}
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <h3 className="font-bold text-lg border-b pb-2">💰 Preços (Landing #precos)</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Título da seção</Label>
+                      <Input value={textsForm.pricingSectionTitle} onChange={e => setTextsForm({...textsForm, pricingSectionTitle: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Badge (ex: Oferta de Lançamento)</Label>
+                      <Input value={textsForm.pricingBadge} onChange={e => setTextsForm({...textsForm, pricingBadge: e.target.value})} />
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                      <Label className="text-xs">Subtítulo da seção</Label>
+                      <Input value={textsForm.pricingSectionSubtitle} onChange={e => setTextsForm({...textsForm, pricingSectionSubtitle: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Nome do Plano</Label>
+                      <Input value={textsForm.pricingPlanName} onChange={e => setTextsForm({...textsForm, pricingPlanName: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Valor (apenas números, ex: 1.800)</Label>
+                      <Input value={textsForm.pricingValue} onChange={e => setTextsForm({...textsForm, pricingValue: e.target.value})} />
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                      <Label className="text-xs">Texto de parcelamento (ex: ou 12× de R$ 150,00)</Label>
+                      <Input value={textsForm.pricingInstallments} onChange={e => setTextsForm({...textsForm, pricingInstallments: e.target.value})} />
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                      <Label className="text-xs">Descrição do plano</Label>
+                      <textarea className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={textsForm.pricingPlanDesc} onChange={e => setTextsForm({...textsForm, pricingPlanDesc: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase">5 Benefícios listados</Label>
+                    {(['pricingBenefit1','pricingBenefit2','pricingBenefit3','pricingBenefit4','pricingBenefit5'] as const).map((key, i) => (
+                      <Input key={key} value={textsForm[key]} onChange={e => setTextsForm({...textsForm, [key]: e.target.value})} placeholder={`Benefício ${i+1}`} />
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Título do formulário</Label>
+                      <Input value={textsForm.pricingFormTitle} onChange={e => setTextsForm({...textsForm, pricingFormTitle: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Subtítulo do formulário</Label>
+                      <Input value={textsForm.pricingFormSubtitle} onChange={e => setTextsForm({...textsForm, pricingFormSubtitle: e.target.value})} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Subscription page */}
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <h3 className="font-bold text-lg border-b pb-2">📋 Página /assinatura</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Nome do plano</Label>
+                      <Input value={textsForm.subscriptionPlanName} onChange={e => setTextsForm({...textsForm, subscriptionPlanName: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Preço (ex: R$ 1.800)</Label>
+                      <Input value={textsForm.subscriptionPrice} onChange={e => setTextsForm({...textsForm, subscriptionPrice: e.target.value})} />
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                      <Label className="text-xs">Texto de parcelamento (ex: à vista ou 12× de R$ 150,00)</Label>
+                      <Input value={textsForm.subscriptionInstallments} onChange={e => setTextsForm({...textsForm, subscriptionInstallments: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase">6 Benefícios</Label>
+                    {(['subscriptionBenefit1','subscriptionBenefit2','subscriptionBenefit3','subscriptionBenefit4','subscriptionBenefit5','subscriptionBenefit6'] as const).map((key, i) => (
+                      <Input key={key} value={textsForm[key]} onChange={e => setTextsForm({...textsForm, [key]: e.target.value})} placeholder={`Benefício ${i+1}`} />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Footer */}
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <h3 className="font-bold text-lg border-b pb-2">📄 Rodapé</h3>
+                  <div className="space-y-2">
+                    <Label>Texto descritivo do rodapé</Label>
+                    <textarea className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={textsForm.footerTagline} onChange={e => setTextsForm({...textsForm, footerTagline: e.target.value})} />
+                  </div>
+                </CardContent>
+              </Card>
+
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button onClick={saveTexts} disabled={savingTexts} className="gradient-primary px-10">
+                {savingTexts && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Salvar Todos os Textos
+              </Button>
+            </div>
           </TabsContent>
 
           {/* APPEARANCE TAB */}
