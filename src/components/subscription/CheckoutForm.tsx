@@ -207,7 +207,12 @@ export const CheckoutForm = ({ showInstallmentPicker = false }: { showInstallmen
                 if (userId) toast.success("Processando link de pagamento...");
             }
 
-            console.log(`[CHECKOUT] Chamando Pagar.me para User: ${userId || 'Visitante'} | Parcelas: ${installments}x`);
+            // Se o picker está oculto (landing page), envia maxInstallments para o Pagar.me
+            // disponibilizar todas as opções de parcelamento no checkout deles.
+            // Se o picker está visível (/assinatura), usa a escolha do usuário.
+            const installmentsToSend = showInstallmentPicker ? installments : maxInstallments;
+
+            console.log(`[CHECKOUT] Chamando Pagar.me para User: ${userId || 'Visitante'} | Parcelas enviadas: ${installmentsToSend}x (picker: ${showInstallmentPicker})`);
 
             const { data: response, error: invokeError } = await supabase.functions.invoke('create-pagarme-subscription', {
                 body: {
@@ -215,7 +220,7 @@ export const CheckoutForm = ({ showInstallmentPicker = false }: { showInstallmen
                     plan_id: courseId ? "course_trainer" : "plan_R5oAGgCBKfvYANlr",
                     course_id: courseId || null,
                     course_title: courseTitle || null,
-                    installments: installments,
+                    installments: installmentsToSend,
                     redirect_url: courseId ? `${window.location.origin}/curso/${courseId}/assistir` : `${window.location.origin}/home`,
                     is_new_user: !currentUser,
                     customer: {
