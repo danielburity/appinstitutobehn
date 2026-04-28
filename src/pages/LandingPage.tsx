@@ -249,8 +249,11 @@ const LandingPage = () => {
 
                             <div className="flex items-baseline gap-2">
                                 <span className="text-2xl font-bold text-primary">R$</span>
-                                <span className="text-7xl font-black tracking-tighter text-primary">1,00</span>
+                                <span className="text-7xl font-black tracking-tighter text-primary">1.800</span>
                                 <span className="text-xl font-bold text-muted-foreground">/ ano</span>
+                            </div>
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-xl mt-2">
+                                <span className="text-sm font-black text-primary">ou 12× de R$ 150,00</span>
                             </div>
 
                             <div className="space-y-4 pt-4">

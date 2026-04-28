@@ -310,7 +310,28 @@ export default function Admin() {
        }
     }
 
-    toast.success("Cursos e Acessos ativados com Sucesso!");
+    // 5. Send invite email
+    try {
+      const { error: emailErr } = await supabase.functions.invoke('send-invite-email', {
+        body: {
+          full_name: accessForm.fullName || null,
+          email: accessForm.email,
+          password: accessForm.fullName ? accessForm.password : null, // only send password for new accounts
+          give_platform: accessForm.givePlatform,
+          app_url: window.location.origin
+        }
+      });
+      if (emailErr) {
+        console.warn('[INVITE EMAIL] Erro ao enviar convite:', emailErr);
+        toast.warning('Acesso ativado! O e-mail de convite não pôde ser enviado no momento.');
+      } else {
+        toast.success('✉️ E-mail de convite enviado com sucesso para ' + accessForm.email);
+      }
+    } catch (emailException) {
+      console.error('[INVITE EMAIL] Falha:', emailException);
+    }
+
+    toast.success('Cursos e Acessos ativados com Sucesso!');
     setGrantingAccess(false);
     setAccessForm({ fullName: '', email: '', password: 'Instituto@123', givePlatform: true, selectedCourseId: 'none' });
   }

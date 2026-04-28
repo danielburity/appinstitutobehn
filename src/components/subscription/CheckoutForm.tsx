@@ -29,7 +29,7 @@ const buildInstallments = (maxInstallments: number, totalAmount: number) =>
         total: totalAmount
     }));
 
-export const CheckoutForm = () => {
+export const CheckoutForm = ({ showInstallmentPicker = false }: { showInstallmentPicker?: boolean }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [step, setStep] = useState(1);
     const [isCheckingPayment, setIsCheckingPayment] = useState(false);
@@ -298,7 +298,8 @@ export const CheckoutForm = () => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
-            {/* ── Seletor de Parcelamento ── */}
+            {/* ── Seletor de Parcelamento (só visível na página /assinatura) ── */}
+            {showInstallmentPicker && (
             <div className="space-y-3">
                 <Label className="text-xs font-black uppercase tracking-widest text-primary/60 flex items-center gap-2">
                     <CreditCard className="w-4 h-4" />
@@ -349,6 +350,7 @@ export const CheckoutForm = () => {
                     </p>
                 )}
             </div>
+            )}
 
             <div className="space-y-4">
                 <div className="space-y-2">

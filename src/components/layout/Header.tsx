@@ -80,6 +80,24 @@ export const Header = () => {
     setUnreadCount(0);
   };
 
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read
+    if (!notification.read) {
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notification.id);
+      setNotifications(prev =>
+        prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+    // Navigate if link exists
+    if (notification.link) {
+      navigate(notification.link);
+    }
+  };
+
   const toggleTheme = () => setTheme((resolvedTheme === "dark" ? "light" : "dark"));
   return (
     <header className="sticky top-0 z-40 bg-sidebar text-sidebar-foreground transition-colors duration-300">
@@ -155,15 +173,22 @@ export const Header = () => {
                       {notifications.map((n) => (
                         <div
                           key={n.id}
-                          className={`p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer ${!n.read ? 'bg-white/[0.02]' : ''}`}
+                          onClick={() => handleNotificationClick(n)}
+                          className={`p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer ${!n.read ? 'bg-white/[0.02]' : ''} ${n.link ? 'hover:bg-white/10' : ''}`}
                         >
                           <div className="flex justify-between items-start mb-1">
-                            <h4 className={`text-sm ${!n.read ? 'font-bold text-white' : 'text-white/80'}`}>{n.title}</h4>
+                            <h4 className={`text-sm ${!n.read ? 'font-bold text-white' : 'text-white/80'}`}>
+                              {!n.read && <span className="inline-block w-1.5 h-1.5 bg-blue-400 rounded-full mr-1.5 mb-0.5 align-middle" />}
+                              {n.title}
+                            </h4>
                             <span className="text-[10px] text-white/40">
                               {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: ptBR })}
                             </span>
                           </div>
                           <p className="text-xs text-white/60 line-clamp-2">{n.content}</p>
+                          {n.link && (
+                            <p className="text-[10px] text-blue-400/60 mt-1 font-medium">Toque para ver →</p>
+                          )}
                         </div>
                       ))}
                     </div>
