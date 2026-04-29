@@ -49,6 +49,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  const adminEmails = useMemo(() => {
+    const env = (import.meta.env.VITE_ADMIN_EMAILS as string | undefined) || '';
+    return env.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+  }, []);
+
   useEffect(() => {
     async function loadProfile() {
       if (!user) {
@@ -62,7 +67,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .select('id, email, full_name, avatar_url, role, migrated, selo_approved, subscription_status, subscription_id')
         .eq('id', user.id)
         .single();
+      
       if (!error && data) {
+        const currentRole = (data.role as Role) ?? null;
+        const isMasterAdmin = user.email ? adminEmails.includes(user.email.toLowerCase()) : false;
+        
+        // Auto-promoção: se está na lista do env mas não é admin no banco, tenta promover
+        if (isMasterAdmin && currentRole !== 'admin') {
+          console.log(`[Auth] Promovendo ${user.email} para admin no banco...`);
+          await supabase.from('profiles').update({ role: 'admin' }).eq('id', user.id);
+          data.role = 'admin';
+        }
+
         setProfile({
           id: data.id,
           email: data.email,
@@ -75,9 +91,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           selo_approved: !!data.selo_approved,
         });
       } else {
+        const isMasterAdmin = user.email ? adminEmails.includes(user.email.toLowerCase()) : false;
+        const initialRole = isMasterAdmin ? 'admin' : 'member';
+
         await supabase
           .from('profiles')
-          .upsert({ id: user.id, email: user.email, role: 'member' }, { onConflict: 'id' });
+          .upsert({ 
+            id: user.id, 
+            email: user.email, 
+            role: initialRole 
+          }, { onConflict: 'id' });
 
         // Auto-Criação de Terapeuta associado
         await supabase
@@ -108,7 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoadingProfile(false);
     }
     loadProfile();
-  }, [user]);
+  }, [user, adminEmails]);
 
   const refreshProfile = async () => {
     if (!user) return;
@@ -137,15 +160,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     profile,
     isAdmin: (() => {
-      const env = (import.meta.env.VITE_ADMIN_EMAILS as string | undefined) || '';
-      const list = env.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-      const byEnv = user?.email ? list.includes(user.email.toLowerCase()) : false;
+      const byEnv = user?.email ? adminEmails.includes(user.email.toLowerCase()) : false;
       return byEnv || profile?.role === 'admin';
     })(),
     isMember: (() => {
-      const env = (import.meta.env.VITE_ADMIN_EMAILS as string | undefined) || '';
-      const list = env.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-      const byEnv = user?.email ? list.includes(user.email.toLowerCase()) : false;
+      const byEnv = user?.email ? adminEmails.includes(user.email.toLowerCase()) : false;
       const isPremium = profile?.subscription_status === 'active';
       return byEnv || profile?.role === 'admin' || isPremium;
     })(),
