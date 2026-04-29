@@ -187,9 +187,16 @@ export const CheckoutForm = () => {
                 if (userId) toast.success("Processando link de pagamento...");
             }
 
+            // Validação de segurança para plano mensal
+            if (paymentMethod === 'monthly' && !courseId && !settings.subscriptionMonthlyPlanId) {
+                toast.error("O Plano Mensal ainda não foi configurado pelo administrador no painel.");
+                setIsSubmitting(false);
+                return;
+            }
+
             // Sempre envia maxInstallments — o seletor visual foi removido.
             // O Pagar.me exibe todas as opções de parcelamento em seu checkout.
-            console.log(`[CHECKOUT] Chamando Pagar.me para User: ${userId || 'Visitante'} | Parcelas enviadas: ${maxInstallments}x`);
+            console.log(`[CHECKOUT] Chamando Pagar.me para User: ${userId || 'Visitante'} | Modo: ${paymentMethod}`);
 
             const { data: response, error: invokeError } = await supabase.functions.invoke('create-pagarme-subscription', {
                 body: {

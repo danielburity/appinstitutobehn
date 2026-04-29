@@ -101,16 +101,24 @@ serve(async (req: Request) => {
         if (payment_type === "subscription") {
             console.log(`[DEBUG] Criando ASSINATURA RECORRENTE: Plan: ${plan_id} | User: ${user_id}`)
             
+            if (!plan_id || plan_id === "") {
+                throw new Error("ID do plano mensal não configurado no Admin. Por favor, gere o plano no Painel Admin antes de prosseguir.")
+            }
+
             const subscriptionPayload = {
                 plan_id: plan_id, 
-                payment_method: "checkout",
+                payment_method: "credit_card", // No V5, o método da assinatura é credit_card, e o checkout é o canal
                 customer: cleanCustomer,
+                card: {
+                    // Campos vazios pois o cartão será capturado no checkout
+                },
                 checkout: {
                     expires_in: 3600,
-                    success_url: redirect_url || "https://instituto-behn.vercel.app",
+                    billing_address_editable: true,
+                    customer_editable: false,
                     accepted_payment_methods: ["credit_card"],
-                    skip_checkout_success_page: false,
-                    customer_editable: false
+                    success_url: redirect_url || "https://instituto-behn.vercel.app",
+                    skip_checkout_success_page: false
                 },
                 metadata: {
                     user_id: user_id,
