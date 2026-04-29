@@ -294,7 +294,7 @@ export default function Admin() {
       tableRows.push(userData);
     });
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
       startY: 20,
