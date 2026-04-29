@@ -48,6 +48,8 @@ export interface AppSettings {
   subscriptionBenefit4: string;
   subscriptionBenefit5: string;
   subscriptionBenefit6: string;
+  subscriptionMonthlyPrice?: string;
+  subscriptionMonthlyPlanId?: string;
   // Footer
   footerTagline: string;
   // Dashboard
@@ -108,6 +110,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   subscriptionBenefit4: "Suporte prioritário via WhatsApp",
   subscriptionBenefit5: "Certificados de conclusão",
   subscriptionBenefit6: "Conteúdos novos toda semana",
+  subscriptionMonthlyPrice: "150,00",
+  subscriptionMonthlyPlanId: "",
   footerTagline: "Excelência no ensino de Hipnose e PNL aplicada. Transformando vidas e carreiras através do conhecimento neurocientífico.",
   dashboardTitle: "O MAIS COMPLETO INSTITUTO DE HIPNOSE E PNL DO BRASIL",
   dashboardSubtitle: "Transforme sua carreira com cursos de excelência, ministrados por especialistas reconhecidos",

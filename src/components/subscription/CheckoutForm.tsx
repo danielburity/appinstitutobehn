@@ -35,6 +35,8 @@ export const CheckoutForm = () => {
     const [isCheckingPayment, setIsCheckingPayment] = useState(false);
     const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
     const [listeningUserId, setListeningUserId] = useState<string | null>(null);
+    const [paymentMethod, setPaymentMethod] = useState<'annual' | 'monthly'>('annual');
+    const { settings } = useSettings();
     const [searchParams] = useSearchParams();
     const courseId = searchParams.get("course_id");
     const courseTitle = searchParams.get("course_title");
@@ -189,10 +191,13 @@ export const CheckoutForm = () => {
             const { data: response, error: invokeError } = await supabase.functions.invoke('create-pagarme-subscription', {
                 body: {
                     user_id: userId || null,
-                    plan_id: courseId ? "course_trainer" : "plan_R5oAGgCBKfvYANlr",
+                    plan_id: courseId 
+                        ? "course_trainer" 
+                        : (paymentMethod === 'monthly' ? settings.subscriptionMonthlyPlanId : "plan_R5oAGgCBKfvYANlr"),
+                    payment_type: courseId ? "order" : (paymentMethod === 'monthly' ? "subscription" : "order"),
                     course_id: courseId || null,
                     course_title: courseTitle || null,
-                    installments: maxInstallments,
+                    installments: paymentMethod === 'monthly' ? 1 : maxInstallments,
                     redirect_url: courseId ? `${window.location.origin}/curso/${courseId}/assistir` : `${window.location.origin}/home`,
                     is_new_user: !currentUser,
                     customer: {
@@ -322,6 +327,43 @@ export const CheckoutForm = () => {
                     </div>
                     {errors.password && <p className="text-xs text-destructive font-black px-1">{errors.password.message}</p>}
                 </div>
+
+                {!courseId && (
+                    <div className="pt-4 space-y-3">
+                        <Label className="text-xs font-black uppercase tracking-widest text-primary/60">Opção de Pagamento</Label>
+                        <div className="grid grid-cols-1 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setPaymentMethod('annual')}
+                                className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'annual' ? 'border-primary bg-primary/5' : 'border-border/50 hover:border-primary/30'}`}
+                            >
+                                <div className="text-left">
+                                    <p className="font-bold text-sm">Plano Anual (Parcelado)</p>
+                                    <p className="text-xs text-muted-foreground">{settings.subscriptionPrice} em até 12x</p>
+                                </div>
+                                {paymentMethod === 'annual' && <CheckCircle2 className="w-5 h-5 text-primary" />}
+                            </button>
+                            
+                            <button
+                                type="button"
+                                onClick={() => setPaymentMethod('monthly')}
+                                className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'monthly' ? 'border-primary bg-primary/5' : 'border-border/50 hover:border-primary/30'}`}
+                            >
+                                <div className="text-left">
+                                    <p className="font-bold text-sm flex items-center gap-2">
+                                        Plano Mensal (Recorrente)
+                                        <span className="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full uppercase">Sugerido</span>
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">R$ {settings.subscriptionMonthlyPrice}/mês — Não consome limite total</p>
+                                </div>
+                                {paymentMethod === 'monthly' && <CheckCircle2 className="w-5 h-5 text-primary" />}
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground leading-tight px-1">
+                            * Na opção recorrente, o valor é cobrado mensalmente e não bloqueia o valor total do ano no seu cartão.
+                        </p>
+                    </div>
+                )}
             </div>
 
             <Button

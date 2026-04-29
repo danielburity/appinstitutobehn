@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Image as ImageIcon, Loader2, Edit2, BookOpen, Upload, Camera, Send } from 'lucide-react';
+import { Plus, Pencil, Trash2, Image as ImageIcon, Loader2, Edit2, BookOpen, Upload, Camera, Send, Zap } from 'lucide-react';
 import { Course, Therapist, AppEvent } from '@/lib/types';
 import { hexToHsl, hslToHex } from '@/lib/utils';
 import { CourseContentManager } from '@/components/admin/CourseContentManager';
@@ -146,8 +146,11 @@ export default function Admin() {
     subscriptionBenefit4: settings.subscriptionBenefit4 || '',
     subscriptionBenefit5: settings.subscriptionBenefit5 || '',
     subscriptionBenefit6: settings.subscriptionBenefit6 || '',
+    subscriptionMonthlyPrice: settings.subscriptionMonthlyPrice || '150,00',
+    subscriptionMonthlyPlanId: settings.subscriptionMonthlyPlanId || '',
     footerTagline: settings.footerTagline || '',
   });
+  const [creatingPlan, setCreatingPlan] = useState(false);
 
   // Sync appearance form with context on load
   useEffect(() => {
@@ -193,6 +196,8 @@ export default function Admin() {
       subscriptionBenefit4: settings.subscriptionBenefit4 || '',
       subscriptionBenefit5: settings.subscriptionBenefit5 || '',
       subscriptionBenefit6: settings.subscriptionBenefit6 || '',
+      subscriptionMonthlyPrice: settings.subscriptionMonthlyPrice || '150,00',
+      subscriptionMonthlyPlanId: settings.subscriptionMonthlyPlanId || '',
       footerTagline: settings.footerTagline || '',
     });
   }, [settings]);
@@ -611,6 +616,44 @@ export default function Admin() {
     }
   }
 
+  async function handleCreateMonthlyPlan() {
+    if (textsForm.subscriptionMonthlyPlanId) {
+      if (!confirm('Já existe um ID de plano configurado. Deseja criar um NOVO plano no Pagar.me?')) return;
+    }
+    
+    setCreatingPlan(true);
+    try {
+      const priceCents = Math.round(parseFloat(textsForm.subscriptionMonthlyPrice.replace(',', '.')) * 100);
+      
+      const { data, error } = await supabase.functions.invoke('create-pagarme-plan', {
+        body: {
+          name: "Plano Mensal Premium - Instituto Behn",
+          price_cents: priceCents,
+          interval: "month",
+          interval_count: 1
+        }
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.details?.message || data.error);
+
+      const planId = data.id;
+      setTextsForm(prev => ({ ...prev, subscriptionMonthlyPlanId: planId }));
+      
+      // Salvar imediatamente no banco
+      await updateSettings({ subscriptionMonthlyPlanId: planId, subscriptionMonthlyPrice: textsForm.subscriptionMonthlyPrice });
+      
+      toast.success('Plano criado com sucesso!', { 
+        description: `O plano foi gerado no Pagar.me e o ID ${planId} foi salvo.` 
+      });
+    } catch (err: any) {
+      console.error('Erro ao criar plano:', err);
+      toast.error('Erro ao criar plano no Pagar.me', { description: err.message });
+    } finally {
+      setCreatingPlan(false);
+    }
+  }
+
   return (
     <div className="space-y-6 min-w-0 max-w-full overflow-hidden pb-20 md:pb-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -893,6 +936,50 @@ export default function Admin() {
                     {(['subscriptionBenefit1','subscriptionBenefit2','subscriptionBenefit3','subscriptionBenefit4','subscriptionBenefit5','subscriptionBenefit6'] as const).map((key, i) => (
                       <Input key={key} value={textsForm[key]} onChange={e => setTextsForm({...textsForm, [key]: e.target.value})} placeholder={`Benefício ${i+1}`} />
                     ))}
+                  </div>
+
+                  <div className="mt-8 pt-6 border-t space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Zap className="w-5 h-5 text-primary" />
+                      </div>
+                      <h4 className="font-bold text-md text-primary uppercase tracking-wider">Recorrência (Não consome limite total)</h4>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground bg-blue-50 p-4 rounded-lg border border-blue-100">
+                      <strong>Dica:</strong> A recorrência mensal é ideal para quem não tem limite total de R$ 1.800,00 no cartão. 
+                      O Pagar.me cobrará apenas o valor da mensalidade a cada mês.
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Valor da Mensalidade (R$)</Label>
+                        <Input 
+                          value={textsForm.subscriptionMonthlyPrice} 
+                          onChange={e => setTextsForm({...textsForm, subscriptionMonthlyPrice: e.target.value})} 
+                          placeholder="150,00" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Pagar.me Plan ID (Mensal)</Label>
+                        <div className="flex gap-2">
+                          <Input 
+                            value={textsForm.subscriptionMonthlyPlanId} 
+                            readOnly 
+                            className="bg-muted font-mono text-xs"
+                            placeholder="Ainda não gerado" 
+                          />
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={handleCreateMonthlyPlan}
+                            disabled={creatingPlan}
+                          >
+                            {creatingPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : "Gerar Plano"}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

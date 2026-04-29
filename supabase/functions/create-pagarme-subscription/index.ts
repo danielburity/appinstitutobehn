@@ -21,7 +21,17 @@ serve(async (req: Request) => {
             throw new Error('Corpo da requisição inválido (JSON esperado)')
         }
 
-        const { plan_id, customer, user_id, redirect_url, is_new_user, course_id, course_title, installments } = body
+        const { 
+            plan_id, 
+            customer, 
+            user_id, 
+            redirect_url, 
+            is_new_user, 
+            course_id, 
+            course_title, 
+            installments,
+            payment_type = "order" 
+        } = body
 
         // Number of installments chosen by the user (1 to maxInstallments)
         const chosenInstallments = Math.max(1, parseInt(String(installments || 1)))
@@ -85,6 +95,52 @@ serve(async (req: Request) => {
                     number: String(customer.phone?.number || "999999999").replace(/\D/g, '').slice(-9)
                 }
             }
+        }
+
+        // --- LÓGICA DE ASSINATURA RECORRENTE (MODO SUBSCRIPTION) ---
+        if (payment_type === "subscription") {
+            console.log(`[DEBUG] Criando ASSINATURA RECORRENTE: Plan: ${plan_id} | User: ${user_id}`)
+            
+            const subscriptionPayload = {
+                plan_id: plan_id, 
+                payment_method: "checkout",
+                customer: cleanCustomer,
+                checkout: {
+                    expires_in: 3600,
+                    success_url: redirect_url || "https://instituto-behn.vercel.app",
+                    accepted_payment_methods: ["credit_card"],
+                    skip_checkout_success_page: false,
+                    customer_editable: false
+                },
+                metadata: {
+                    user_id: user_id,
+                    customer_email: cleanCustomer.email,
+                    flow: "recurring_subscription"
+                }
+            }
+
+            const subResp = await fetch('https://api.pagar.me/core/v5/subscriptions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${btoa(secretKey + ':')}`
+                },
+                body: JSON.stringify(subscriptionPayload)
+            })
+
+            const subText = await subResp.text()
+            console.log(`[DEBUG] Resposta Sub [${subResp.status}]:`, subText)
+            
+            const subResult = JSON.parse(subText)
+            if (!subResp.ok) throw new Error(`Pagar.me Sub Error: ${subResult.message || subText}`)
+
+            return new Response(JSON.stringify({
+                url: subResult.checkouts?.[0]?.payment_url,
+                id: subResult.id
+            }), {
+                status: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            })
         }
 
         // --- PAYLOAD DEFINITIVO: CRIANDO PEDIDO (ORDER) COM CHECKOUT ---
