@@ -16,6 +16,17 @@ import { hexToHsl, hslToHex } from '@/lib/utils';
 import { CourseContentManager } from '@/components/admin/CourseContentManager';
 import { toast } from 'sonner';
 import { ImageUpload } from '@/components/admin/ImageUpload';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+interface UserData {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  subscription_status: string;
+  courses: string[];
+}
 
 function generateSlug(text: string) {
   return text
@@ -69,6 +80,8 @@ export default function Admin() {
   const [therapists, setTherapists] = useState<Therapist[]>([]);
   const [events, setEvents] = useState<AppEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const [usersData, setUsersData] = useState<UserData[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   // Forms states
   const [courseForm, setCourseForm] = useState({
@@ -203,17 +216,94 @@ export default function Admin() {
   }, [settings]);
 
   // Load Data
-  async function loadData() {
-    setLoading(true);
-    const { data: c } = await supabase.from('courses').select('*').order('updated_at', { ascending: false });
-    const { data: t } = await supabase.from('therapists').select('*').order('updated_at', { ascending: false });
-    const { data: e } = await supabase.from('events').select('*').order('updated_at', { ascending: false });
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [coursesRes, therapistsRes, eventsRes] = await Promise.all([
+        supabase.from('courses').select('*').order('created_at', { ascending: false }),
+        supabase.from('therapists').select('*').order('created_at', { ascending: false }),
+        supabase.from('events').select('*').order('date', { ascending: true })
+      ]);
 
-    if (c) setCourses(c);
-    if (t) setTherapists(t);
-    if (e) setEvents(e);
-    setLoading(false);
-  }
+      if (coursesRes.error) throw coursesRes.error;
+      if (therapistsRes.error) throw therapistsRes.error;
+      if (eventsRes.error) throw eventsRes.error;
+
+      setCourses(coursesRes.data || []);
+      setTherapists(therapistsRes.data || []);
+      setEvents(eventsRes.data || []);
+      
+      fetchUsersWithCourses();
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      toast.error('Erro ao carregar dados');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUsersWithCourses = async () => {
+    try {
+      setLoadingUsers(true);
+      // 1. Get all profiles
+      const { data: profiles, error: pErr } = await supabase.from('profiles').select('*');
+      if (pErr) throw pErr;
+
+      // 2. Get all user_courses with course title
+      const { data: userCourses, error: ucErr } = await supabase.from('user_courses').select('user_id, courses(title)');
+      if (ucErr) throw ucErr;
+
+      // 3. Map them
+      const mapped = profiles.map((p: any) => {
+        const userEnrollments = userCourses.filter((uc: any) => uc.user_id === p.id);
+        const courseTitles = userEnrollments.map((uc: any) => uc.courses?.title).filter(Boolean);
+        return {
+          id: p.id,
+          email: p.email,
+          full_name: p.full_name || 'Sem nome',
+          role: p.role || 'member',
+          subscription_status: p.subscription_status || 'inactive',
+          courses: courseTitles
+        } as UserData;
+      });
+
+      setUsersData(mapped);
+    } catch (error) {
+      console.error("Erro ao carregar usuários:", error);
+      toast.error("Erro ao carregar usuários");
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const exportUsersToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Relatório de Usuários e Afiliados", 14, 15);
+    
+    const tableColumn = ["Nome", "E-mail", "Tipo", "Status Assinatura", "Cursos Liberados"];
+    const tableRows: any[] = [];
+
+    usersData.forEach(user => {
+      const userData = [
+        user.full_name,
+        user.email,
+        user.role === 'affiliate' ? 'Afiliado' : 'Membro',
+        user.subscription_status === 'active' ? 'Ativa' : 'Inativa',
+        user.courses.join(', ') || 'Nenhum'
+      ];
+      tableRows.push(userData);
+    });
+
+    (doc as any).autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [41, 128, 185] },
+    });
+
+    doc.save(`usuarios_relatorio_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
 
   useEffect(() => {
     loadData();
@@ -675,11 +765,81 @@ export default function Admin() {
             <TabsTrigger value="courses">Cursos</TabsTrigger>
             <TabsTrigger value="therapists">Terapeutas</TabsTrigger>
             <TabsTrigger value="events">Eventos</TabsTrigger>
+            <TabsTrigger value="users">Usuários</TabsTrigger>
             <TabsTrigger value="notifications">Notificações</TabsTrigger>
             <TabsTrigger value="access">Acessos/Matrícula</TabsTrigger>
             <TabsTrigger value="texts">Textos das Páginas</TabsTrigger>
             <TabsTrigger value="appearance">Aparência</TabsTrigger>
           </TabsList>
+
+          {/* USERS TAB */}
+          <TabsContent value="users" className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-4 rounded-lg border shadow-sm">
+              <div>
+                 <h2 className="text-xl font-bold">Gerenciamento de Usuários</h2>
+                 <p className="text-muted-foreground text-sm mt-1">Lista de todos os usuários cadastrados, afiliados e cursos liberados.</p>
+              </div>
+              <Button onClick={exportUsersToPDF} variant="default" className="w-full sm:w-auto" disabled={loadingUsers || usersData.length === 0}>
+                {loadingUsers ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <BookOpen className="w-4 h-4 mr-2" />}
+                Exportar para PDF
+              </Button>
+            </div>
+
+            <Card>
+              <CardContent className="pt-6">
+                {loadingUsers ? (
+                  <div className="flex justify-center items-center py-10">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="border rounded-lg overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>E-mail</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Assinatura</TableHead>
+                          <TableHead>Cursos</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {usersData.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado.</TableCell>
+                          </TableRow>
+                        ) : (
+                          usersData.map((u) => (
+                            <TableRow key={u.id}>
+                              <TableCell className="font-medium">{u.full_name}</TableCell>
+                              <TableCell>{u.email}</TableCell>
+                              <TableCell>
+                                {u.role === 'affiliate' ? (
+                                  <span className="bg-primary/20 text-primary px-2 py-1 rounded text-xs font-bold uppercase">Afiliado</span>
+                                ) : (
+                                  <span className="bg-muted text-muted-foreground px-2 py-1 rounded text-xs uppercase">Membro</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {u.subscription_status === 'active' ? (
+                                  <span className="text-green-600 font-bold text-xs uppercase">Ativa</span>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs uppercase">Inativa</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="max-w-[200px] truncate" title={u.courses.join(', ')}>
+                                {u.courses.length > 0 ? u.courses.join(', ') : '-'}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* ACCESS CONTROL TAB */}
           <TabsContent value="access" className="space-y-6">

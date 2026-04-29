@@ -348,7 +348,7 @@ export const CheckoutForm = () => {
                                 className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'annual' ? 'border-primary bg-primary/5' : 'border-border/50 hover:border-primary/30'}`}
                             >
                                 <div className="text-left">
-                                    <p className="font-bold text-sm">Plano Anual (Parcelado)</p>
+                                    <p className="font-bold text-sm">Plano Anual</p>
                                     <p className="text-xs text-muted-foreground">{settings.subscriptionPrice} em até 12x</p>
                                 </div>
                                 {paymentMethod === 'annual' && <CheckCircle2 className="w-5 h-5 text-primary" />}
@@ -361,10 +361,9 @@ export const CheckoutForm = () => {
                             >
                                 <div className="text-left">
                                     <p className="font-bold text-sm flex items-center gap-2">
-                                        Plano Mensal (Recorrente)
-                                        <span className="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full uppercase">Sugerido</span>
+                                        Plano Anual - Recorrente
                                     </p>
-                                    <p className="text-xs text-muted-foreground">R$ {settings.subscriptionMonthlyPrice}/mês — Não consome limite total</p>
+                                    <p className="text-xs text-muted-foreground">R$ {settings.subscriptionMonthlyPrice}/mês</p>
                                 </div>
                                 {paymentMethod === 'monthly' && <CheckCircle2 className="w-5 h-5 text-primary" />}
                             </button>
