@@ -101,24 +101,23 @@ serve(async (req: Request) => {
         if (payment_type === "subscription") {
             console.log(`[DEBUG] Criando ASSINATURA RECORRENTE: Plan: ${plan_id} | User: ${user_id}`)
             
-            if (!plan_id || plan_id === "") {
-                throw new Error("ID do plano mensal não configurado no Admin. Por favor, gere o plano no Painel Admin antes de prosseguir.")
+            if (!plan_id || plan_id === "" || plan_id === "Ainda não gerado") {
+                throw new Error("ID do plano mensal não configurado ou inválido. Por favor, gere o plano no Painel Admin antes de prosseguir.")
             }
 
             const subscriptionPayload = {
                 plan_id: plan_id, 
-                payment_method: "credit_card", // No V5, o método da assinatura é credit_card, e o checkout é o canal
+                payment_method: "credit_card",
                 customer: cleanCustomer,
-                card: {
-                    // Campos vazios pois o cartão será capturado no checkout
-                },
+                card: {},
                 checkout: {
                     expires_in: 3600,
                     billing_address_editable: true,
                     customer_editable: false,
-                    accepted_payment_methods: ["credit_card"],
+                    accepted_payment_methods: ["credit_card"], // APENAS CARTÃO NA RECORRÊNCIA
                     success_url: redirect_url || "https://instituto-behn.vercel.app",
-                    skip_checkout_success_page: false
+                    skip_checkout_success_page: false,
+                    payment_methods: ["credit_card"]
                 },
                 metadata: {
                     user_id: user_id,
@@ -151,9 +150,7 @@ serve(async (req: Request) => {
             })
         }
 
-        // --- PAYLOAD DEFINITIVO: CRIANDO PEDIDO (ORDER) COM CHECKOUT ---
-        // A API de Orders suporta nativamente 'success_url' dentro do objeto 'checkout'
-        
+        // --- LÓGICA DE PEDIDO ÚNICO/PARCELADO (MODO ORDER) ---
         let orderAmount = 180000; // R$ 1.800,00 — Acesso Plataforma + Afiliados Behn
         let orderDescription = "Acesso à Plataforma Instituto Behn + Curso Afiliados";
         let orderCode = "plan_premium_anual";
@@ -200,11 +197,8 @@ serve(async (req: Request) => {
                     payment_method: "checkout",
                     checkout: {
                         expires_in: 3600,
-                        // skip_checkout_success_page removido: para PIX, a tela de sucesso DO Pagar.me
-                        // é onde o QR Code é exibido. Removendo isso, o Pagar.me mostra o QR Code
-                        // corretamente. O webhook libera o acesso automaticamente após confirmação.
                         success_url: redirect_url || "https://instituto-behn.vercel.app",
-                        accepted_payment_methods: ["credit_card", "pix"],
+                        accepted_payment_methods: ["credit_card", "pix"], // PIX + CARTÃO NO PEDIDO ÚNICO
                         credit_card: {
                             operation_type: "auth_and_capture",
                             installments: Array.from({ length: chosenInstallments }, (_, i) => ({
