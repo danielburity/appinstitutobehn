@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { useSettings } from "@/context/SettingsContext";
+import { useAuth } from "@/context/AuthContext";
 
 const checkoutSchema = z.object({
     name: z.string().min(3, "Nome muito curto"),
@@ -38,6 +40,7 @@ export const CheckoutForm = () => {
     const [paymentMethod, setPaymentMethod] = useState<'annual' | 'monthly'>('annual');
     const { settings } = useSettings();
     const [searchParams] = useSearchParams();
+    const { user } = useAuth();
     const courseId = searchParams.get("course_id");
     const courseTitle = searchParams.get("course_title");
 
@@ -199,7 +202,7 @@ export const CheckoutForm = () => {
                     course_title: courseTitle || null,
                     installments: paymentMethod === 'monthly' ? 1 : maxInstallments,
                     redirect_url: courseId ? `${window.location.origin}/curso/${courseId}/assistir` : `${window.location.origin}/home`,
-                    is_new_user: !currentUser,
+                    is_new_user: !user,
                     customer: {
                         name: data.name,
                         email: data.email,
