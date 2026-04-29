@@ -965,7 +965,7 @@ export default function Admin() {
                         <Label className="text-primary font-bold">Pagar.me Plan ID (Mensal)</Label>
                         <Input 
                           value={textsForm.subscriptionMonthlyPlanId} 
-                          readOnly 
+                          onChange={e => setTextsForm({...textsForm, subscriptionMonthlyPlanId: e.target.value})}
                           className="bg-muted font-mono text-xs h-12"
                           placeholder="Ainda não gerado" 
                         />

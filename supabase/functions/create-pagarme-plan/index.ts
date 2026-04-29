@@ -33,12 +33,12 @@ serve(async (req) => {
             console.warn("Aviso: Falha ao processar o JSON do corpo. Usando valores padrão.")
         }
 
-        const { name, price_cents, interval = "year", interval_count = 1 } = body as any
+        const { name, price_cents, interval, interval_count = 1 } = body as any
 
         const planName = name || (interval === "month" ? "Plano Mensal Premium - Instituto Behn" : "Plano Anual Premium - Instituto Behn")
-        const planPrice = price_cents || 180000 // R$ 1.800,00 padrão (ajustado de 100)
+        const planPrice = price_cents || (interval === "month" ? 15000 : 180000) 
 
-        console.log(`GERANDO PLANO ${interval.toUpperCase()}: ${planName} - Valor: ${planPrice} centavos`)
+        console.log(`GERANDO PLANO ${String(interval).toUpperCase()}: ${planName} - Valor: ${planPrice} centavos`)
 
         // 4. Chamada para o Pagar.me (V5)
         const response = await fetch('https://api.pagar.me/core/v5/plans', {
