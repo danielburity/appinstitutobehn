@@ -105,17 +105,28 @@ serve(async (req: Request) => {
                 throw new Error("ID do plano mensal não configurado ou inválido. Por favor, gere o plano no Painel Admin antes de prosseguir.")
             }
 
-            const subscriptionPayload = {
-                plan_id: plan_id, 
-                payment_method: "credit_card",
+            const paymentLinkPayload = {
+                type: "subscription",
+                name: "Assinatura Mensal Premium",
                 customer: cleanCustomer,
-                checkout: {
-                    expires_in: 3600,
-                    billing_address_editable: true,
-                    customer_editable: false,
-                    accepted_payment_methods: ["credit_card"], // APENAS CARTÃO
-                    success_url: redirect_url || "https://instituto-behn.vercel.app",
-                    skip_checkout_success_page: false
+                payment_settings: {
+                    accepted_payment_methods: ["credit_card"],
+                    credit_card_settings: {
+                        operation_type: "auth_and_capture"
+                    }
+                },
+                cart_settings: {
+                    recurrences: [
+                        {
+                            interval: "month",
+                            interval_count: 1,
+                            pricing_scheme: {
+                                scheme_type: "unit",
+                                price: 15000
+                            },
+                            plan_id: plan_id
+                        }
+                    ]
                 },
                 metadata: {
                     user_id: user_id,
@@ -124,35 +135,35 @@ serve(async (req: Request) => {
                 }
             }
 
-            console.log(`[DEBUG] Enviando Payload Subscription V5:`, JSON.stringify(subscriptionPayload))
+            console.log(`[DEBUG] Enviando Payload PaymentLink V5:`, JSON.stringify(paymentLinkPayload))
 
-            const subResp = await fetch('https://api.pagar.me/core/v5/subscriptions', {
+            const plResp = await fetch('https://api.pagar.me/core/v5/paymentlinks', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Basic ${btoa(secretKey + ':')}`
                 },
-                body: JSON.stringify(subscriptionPayload)
+                body: JSON.stringify(paymentLinkPayload)
             })
 
-            const subText = await subResp.text()
-            console.log(`[DEBUG] Resposta Pagar.me [${subResp.status}]:`, subText)
+            const plText = await plResp.text()
+            console.log(`[DEBUG] Resposta Pagar.me [${plResp.status}]:`, plText)
             
-            let subResult;
+            let plResult;
             try {
-                subResult = JSON.parse(subText)
+                plResult = JSON.parse(plText)
             } catch (e) {
-                throw new Error(`Erro ao processar resposta do Pagar.me: ${subText}`)
+                throw new Error(`Erro ao processar resposta do Pagar.me: ${plText}`)
             }
 
-            if (!subResp.ok) {
-                const pmeError = subResult.message || JSON.stringify(subResult.errors || subResult)
+            if (!plResp.ok) {
+                const pmeError = plResult.message || JSON.stringify(plResult.errors || plResult)
                 throw new Error(`Erro no Pagar.me (Assinatura): ${pmeError}`)
             }
 
             return new Response(JSON.stringify({
-                url: subResult.checkouts?.[0]?.payment_url,
-                id: subResult.id
+                url: plResult.url,
+                id: plResult.id
             }), {
                 status: 200,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
