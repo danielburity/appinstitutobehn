@@ -114,10 +114,10 @@ serve(async (req: Request) => {
                     expires_in: 3600,
                     billing_address_editable: true,
                     customer_editable: false,
-                    accepted_payment_methods: ["credit_card"], // APENAS CARTÃO NA RECORRÊNCIA
+                    accepted_payment_methods: ["credit_card"], // APENAS CARTÃO
+                    payment_methods: ["credit_card"],          // REFORÇO APENAS CARTÃO
                     success_url: redirect_url || "https://instituto-behn.vercel.app",
-                    skip_checkout_success_page: false,
-                    payment_methods: ["credit_card"]
+                    skip_checkout_success_page: false
                 },
                 metadata: {
                     user_id: user_id,
