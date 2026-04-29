@@ -951,33 +951,41 @@ export default function Admin() {
                       O Pagar.me cobrará apenas o valor da mensalidade a cada mês.
                     </p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/20 rounded-xl border border-dashed border-primary/30">
                       <div className="space-y-2">
-                        <Label>Valor da Mensalidade (R$)</Label>
+                        <Label className="text-primary font-bold">Valor da Mensalidade (R$)</Label>
                         <Input 
                           value={textsForm.subscriptionMonthlyPrice} 
                           onChange={e => setTextsForm({...textsForm, subscriptionMonthlyPrice: e.target.value})} 
                           placeholder="150,00" 
+                          className="font-bold text-lg h-12"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Pagar.me Plan ID (Mensal)</Label>
-                        <div className="flex gap-2">
-                          <Input 
-                            value={textsForm.subscriptionMonthlyPlanId} 
-                            readOnly 
-                            className="bg-muted font-mono text-xs"
-                            placeholder="Ainda não gerado" 
-                          />
-                          <Button 
-                            variant="secondary" 
-                            size="sm" 
-                            onClick={handleCreateMonthlyPlan}
-                            disabled={creatingPlan}
-                          >
-                            {creatingPlan ? <Loader2 className="w-4 h-4 animate-spin" /> : "Gerar Plano"}
-                          </Button>
-                        </div>
+                        <Label className="text-primary font-bold">Pagar.me Plan ID (Mensal)</Label>
+                        <Input 
+                          value={textsForm.subscriptionMonthlyPlanId} 
+                          readOnly 
+                          className="bg-muted font-mono text-xs h-12"
+                          placeholder="Ainda não gerado" 
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Button 
+                          variant="default" 
+                          className="w-full h-12 gradient-primary shadow-lg hover:scale-[1.01] transition-transform" 
+                          onClick={handleCreateMonthlyPlan}
+                          disabled={creatingPlan}
+                        >
+                          {creatingPlan ? (
+                            <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Gerando Plano no Pagar.me...</>
+                          ) : (
+                            <><Zap className="w-5 h-5 mr-2" /> GERAR PLANO NO PAGAR.ME AGORA</>
+                          )}
+                        </Button>
+                        <p className="text-[10px] text-center text-muted-foreground mt-2">
+                          * Clique acima apenas uma vez. O ID será gerado e salvo automaticamente.
+                        </p>
                       </div>
                     </div>
                   </div>
