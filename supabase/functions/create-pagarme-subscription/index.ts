@@ -109,13 +109,11 @@ serve(async (req: Request) => {
                 plan_id: plan_id, 
                 payment_method: "credit_card",
                 customer: cleanCustomer,
-                card: {},
                 checkout: {
                     expires_in: 3600,
                     billing_address_editable: true,
                     customer_editable: false,
                     accepted_payment_methods: ["credit_card"], // APENAS CARTÃO
-                    payment_methods: ["credit_card"],          // REFORÇO APENAS CARTÃO
                     success_url: redirect_url || "https://instituto-behn.vercel.app",
                     skip_checkout_success_page: false
                 },
@@ -125,6 +123,8 @@ serve(async (req: Request) => {
                     flow: "recurring_subscription"
                 }
             }
+
+            console.log(`[DEBUG] Enviando Payload Subscription V5:`, JSON.stringify(subscriptionPayload))
 
             const subResp = await fetch('https://api.pagar.me/core/v5/subscriptions', {
                 method: 'POST',
@@ -136,10 +136,19 @@ serve(async (req: Request) => {
             })
 
             const subText = await subResp.text()
-            console.log(`[DEBUG] Resposta Sub [${subResp.status}]:`, subText)
+            console.log(`[DEBUG] Resposta Pagar.me [${subResp.status}]:`, subText)
             
-            const subResult = JSON.parse(subText)
-            if (!subResp.ok) throw new Error(`Pagar.me Sub Error: ${subResult.message || subText}`)
+            let subResult;
+            try {
+                subResult = JSON.parse(subText)
+            } catch (e) {
+                throw new Error(`Erro ao processar resposta do Pagar.me: ${subText}`)
+            }
+
+            if (!subResp.ok) {
+                const pmeError = subResult.message || JSON.stringify(subResult.errors || subResult)
+                throw new Error(`Erro no Pagar.me (Assinatura): ${pmeError}`)
+            }
 
             return new Response(JSON.stringify({
                 url: subResult.checkouts?.[0]?.payment_url,
