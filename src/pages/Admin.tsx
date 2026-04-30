@@ -750,7 +750,7 @@ export default function Admin() {
       // 1. Get all active members and admins from profiles
       const { data: activeProfiles, error: profErr } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url')
+        .select('id, full_name, avatar_url, email')
         .or('subscription_status.eq.active,role.eq.admin');
         
       if (profErr) throw profErr;
@@ -769,9 +769,17 @@ export default function Admin() {
       
       let updatedCount = 0;
       
+      const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase());
+      
       // 3. Insert missing ones OR update existing ones
       for (const profile of activeProfiles || []) {
         if (!profile.full_name) continue;
+        
+        // Pula os donos da plataforma para não aparecerem como Terapeutas na vitrine
+        if (profile.email && adminEmails.includes(profile.email.toLowerCase())) {
+            continue;
+        }
+        
         const nameKey = profile.full_name.toLowerCase().trim();
         
         const existingTherapist = therapistMap.get(nameKey);
