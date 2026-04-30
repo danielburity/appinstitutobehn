@@ -69,6 +69,15 @@ const Events = () => {
     return list;
   }, [filtroAtivo, date, events]);
 
+  const eventDates = useMemo(() => {
+    return events
+      .filter((e) => e.date)
+      .map((e) => {
+        const [year, month, day] = e.date.split('-');
+        return new Date(Number(year), Number(month) - 1, Number(day));
+      });
+  }, [events]);
+
   const eventosDestaque = filteredEvents.filter((e) => e.featured);
   const outrosEventos = filteredEvents.filter((e) => !e.featured);
 
@@ -177,6 +186,10 @@ const Events = () => {
               onSelect={setDate}
               locale={ptBR}
               className="rounded-md border"
+              modifiers={{ hasEvent: eventDates }}
+              modifiersClassNames={{
+                hasEvent: "font-bold text-accent relative after:absolute after:bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-accent after:rounded-full"
+              }}
             />
             <div className="mt-4 space-y-2">
               <div className="flex items-center gap-2">
