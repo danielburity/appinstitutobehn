@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Bell, User, Brain, Sun, Moon, Menu, Home, BookOpen, Users, Calendar, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -77,7 +77,10 @@ export const Header = () => {
     setUnreadCount(0);
   };
 
-  const handleNotificationClick = async (notification: Notification) => {
+  const handleNotificationClick = async (e: React.MouseEvent, notification: Notification) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     // Toggle expand / collapse
     setExpandedId(prev => prev === notification.id ? null : notification.id);
 
@@ -191,7 +194,7 @@ export const Header = () => {
                             {/* Row — click to expand/collapse */}
                             <button
                               type="button"
-                              onClick={() => handleNotificationClick(n)}
+                              onClick={(e) => handleNotificationClick(e, n)}
                               className={`w-full text-left px-4 py-3 transition-colors duration-150
                                 hover:bg-white/[0.05]
                                 ${isExpanded ? 'bg-white/[0.06]' : ''}

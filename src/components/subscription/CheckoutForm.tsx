@@ -164,9 +164,7 @@ export const CheckoutForm = () => {
                         console.log(`[CHECKOUT] Criando registro de terapeuta para: ${userId}`);
                         try {
                             const { error: therapistError } = await supabase.from('therapists').insert({
-                                id: userId,
                                 name: data.name,
-                                email: data.email,
                                 contact_whatsapp: data.phone.replace(/\D/g, ''),
                                 specialties: ["Hipnoterapia", "PNL"], // Especialidades padrão
                                 selo_approved: true, // Aprovação automática conforme solicitado

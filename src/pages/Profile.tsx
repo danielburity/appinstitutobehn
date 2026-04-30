@@ -27,18 +27,17 @@ const Profile = () => {
             .update({ full_name: fullName, avatar_url: avatarUrl })
             .eq("id", user.id);
             
-        // Sync the avatar to therapists table as well, so their profile picture updates everywhere
-        await supabase
-            .from("therapists")
-            .update({ avatar_url: avatarUrl, name: fullName })
-            .eq("id", user.id);
-            
-        // Fallback: Also try updating by email to heal records created before the checkout bug fix
-        if (user.email) {
-             await supabase
+        // Sync the avatar to therapists table as well, matching by name since therapists has no ID relationship
+        if (profile?.full_name) {
+            await supabase
                 .from("therapists")
-                .update({ avatar_url: avatarUrl, name: fullName, id: user.id })
-                .eq("email", user.email);
+                .update({ avatar_url: avatarUrl, name: fullName })
+                .eq("name", profile.full_name);
+        } else if (fullName) {
+            await supabase
+                .from("therapists")
+                .update({ avatar_url: avatarUrl, name: fullName })
+                .eq("name", fullName);
         }
 
         setLoading(false);

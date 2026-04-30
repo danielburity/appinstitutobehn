@@ -164,6 +164,7 @@ export default function Admin() {
     footerTagline: settings.footerTagline || '',
   });
   const [creatingPlan, setCreatingPlan] = useState(false);
+  const [syncingTherapists, setSyncingTherapists] = useState(false);
 
   // Sync appearance form with context on load
   useEffect(() => {
@@ -467,9 +468,7 @@ export default function Admin() {
        });
        // Auto create therapist profile to prevent errors
        await supabase.from('therapists').insert({
-         id: targetUserId,
          name: accessForm.fullName,
-         email: accessForm.email,
          state: "Em Configuração",
          specialties: ["Terapeuta"]
        });
@@ -741,6 +740,57 @@ export default function Admin() {
       toast.error('Erro ao criar plano no Pagar.me', { description: err.message });
     } finally {
       setCreatingPlan(false);
+    }
+  }
+
+  async function syncAllTherapists() {
+    setSyncingTherapists(true);
+    let count = 0;
+    try {
+      // 1. Get all active members from profiles
+      const { data: activeProfiles, error: profErr } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .eq('subscription_status', 'active');
+        
+      if (profErr) throw profErr;
+      
+      // 2. Get all therapists
+      const { data: allTherapists, error: therErr } = await supabase
+        .from('therapists')
+        .select('name');
+        
+      if (therErr) throw therErr;
+      
+      const therapistNames = new Set(allTherapists.map(t => t.name?.toLowerCase().trim()));
+      
+      // 3. Insert missing ones
+      for (const profile of activeProfiles || []) {
+        if (!profile.full_name) continue;
+        const nameKey = profile.full_name.toLowerCase().trim();
+        
+        if (!therapistNames.has(nameKey)) {
+          const { error: insertErr } = await supabase.from('therapists').insert({
+            name: profile.full_name,
+            avatar_url: profile.avatar_url,
+            state: 'Em Configuração',
+            specialties: ['Terapeuta'],
+            selo_approved: true
+          });
+          
+          if (!insertErr) {
+            count++;
+            therapistNames.add(nameKey);
+          }
+        }
+      }
+      
+      toast.success('Sincronização Concluída!', { description: `${count} novos terapeutas adicionados com base nos alunos ativos.` });
+      loadData();
+    } catch (error: any) {
+      toast.error('Erro na sincronização: ' + error.message);
+    } finally {
+      setSyncingTherapists(false);
     }
   }
 
@@ -1456,8 +1506,13 @@ export default function Admin() {
           <TabsContent value="therapists" className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h2 className="text-xl font-bold">Gerenciar Terapeutas</h2>
-              <Dialog open={createTherapistOpen} onOpenChange={setCreateTherapistOpen}>
-                <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" /> Novo Terapeuta</Button></DialogTrigger>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={syncAllTherapists} disabled={syncingTherapists}>
+                  {syncingTherapists ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Users className="w-4 h-4 mr-2" />}
+                  Sincronizar Assinantes
+                </Button>
+                <Dialog open={createTherapistOpen} onOpenChange={setCreateTherapistOpen}>
+                  <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" /> Novo Terapeuta</Button></DialogTrigger>
                 <DialogContent>
                   <DialogHeader><DialogTitle>Novo Terapeuta</DialogTitle></DialogHeader>
                   <div className="grid gap-4 py-4">
