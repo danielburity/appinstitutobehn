@@ -747,11 +747,11 @@ export default function Admin() {
     setSyncingTherapists(true);
     let count = 0;
     try {
-      // 1. Get all active members from profiles
+      // 1. Get all active members and admins from profiles
       const { data: activeProfiles, error: profErr } = await supabase
         .from('profiles')
         .select('id, full_name, avatar_url')
-        .eq('subscription_status', 'active');
+        .or('subscription_status.eq.active,role.eq.admin');
         
       if (profErr) throw profErr;
       
