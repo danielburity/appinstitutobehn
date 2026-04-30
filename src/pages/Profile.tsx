@@ -32,6 +32,14 @@ const Profile = () => {
             .from("therapists")
             .update({ avatar_url: avatarUrl, name: fullName })
             .eq("id", user.id);
+            
+        // Fallback: Also try updating by email to heal records created before the checkout bug fix
+        if (user.email) {
+             await supabase
+                .from("therapists")
+                .update({ avatar_url: avatarUrl, name: fullName, id: user.id })
+                .eq("email", user.email);
+        }
 
         setLoading(false);
         if (error) {
