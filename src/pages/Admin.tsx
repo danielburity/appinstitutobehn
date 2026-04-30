@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Image as ImageIcon, Loader2, Edit2, BookOpen, Upload, Camera, Send, Zap } from 'lucide-react';
+import { Plus, Pencil, Trash2, Image as ImageIcon, Loader2, Edit2, BookOpen, Upload, Camera, Send, Zap, Users } from 'lucide-react';
 import { Course, Therapist, AppEvent } from '@/lib/types';
 import { hexToHsl, hslToHex } from '@/lib/utils';
 import { CourseContentManager } from '@/components/admin/CourseContentManager';
