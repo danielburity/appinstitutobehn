@@ -769,7 +769,11 @@ export default function Admin() {
       
       let updatedCount = 0;
       
-      const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase());
+      const adminEmails = [
+        'daniel.burity@gmail.com',
+        'financeiro@institutobehn.com.br',
+        'daniel.garcia@grupoideale.com.br'
+      ];
       
       // 3. Insert missing ones OR update existing ones
       for (const profile of activeProfiles || []) {
