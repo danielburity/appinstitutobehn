@@ -29,8 +29,7 @@ export const Header = () => {
   const { settings } = useSettings();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-
+  const [unreadCount, setUnreadCount] = useState(0);
   useEffect(() => {
     if (!user) return;
 
@@ -81,8 +80,8 @@ export const Header = () => {
     e.preventDefault();
     e.stopPropagation();
 
-    // Toggle expand / collapse
-    setExpandedId(prev => prev === notification.id ? null : notification.id);
+    e.preventDefault();
+    e.stopPropagation();
 
     // Mark as read if needed
     if (!notification.read) {
@@ -188,64 +187,49 @@ export const Header = () => {
                   ) : (
                     <div className="flex flex-col divide-y divide-white/5">
                       {notifications.map((n) => {
-                        const isExpanded = expandedId === n.id;
                         return (
                           <div key={n.id}>
-                            {/* Row — click to expand/collapse */}
                             <button
                               type="button"
-                              onClick={(e) => handleNotificationClick(e, n)}
+                              onClick={(e) => {
+                                handleNotificationClick(e, n);
+                                if (n.link) {
+                                  navigate(n.link);
+                                }
+                              }}
                               className={`w-full text-left px-4 py-3 transition-colors duration-150
                                 hover:bg-white/[0.05]
-                                ${isExpanded ? 'bg-white/[0.06]' : ''}
-                                ${!n.read && !isExpanded ? 'bg-blue-500/5' : ''}
+                                ${!n.read ? 'bg-blue-500/5' : ''}
                               `}
                             >
                               <div className="flex items-start gap-2.5">
                                 {/* Unread dot */}
                                 <span className={`mt-[5px] flex-shrink-0 w-2 h-2 rounded-full ${!n.read ? 'bg-blue-400' : 'bg-transparent'}`} />
 
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center justify-between gap-1">
-                                    <p className={`text-sm leading-snug truncate ${!n.read ? 'font-bold text-white' : 'font-medium text-white/75'}`}>
+                                <div className="flex-1 min-w-0 pr-2">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className={`text-sm leading-snug whitespace-normal break-words ${!n.read ? 'font-bold text-white' : 'font-medium text-white/75'}`}>
                                       {n.title}
                                     </p>
-                                    <div className="flex items-center gap-1 flex-shrink-0 ml-1">
-                                      <span className="text-[10px] text-white/35 whitespace-nowrap">
-                                        {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: ptBR })}
-                                      </span>
-                                      {isExpanded
-                                        ? <ChevronUp className="w-3 h-3 text-white/40" />
-                                        : <ChevronDown className="w-3 h-3 text-white/40" />
-                                      }
-                                    </div>
+                                    <span className="text-[10px] text-white/35 whitespace-nowrap flex-shrink-0 mt-0.5">
+                                      {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: ptBR })}
+                                    </span>
                                   </div>
-                                  {/* One-line preview when collapsed */}
-                                  {!isExpanded && (
-                                    <p className="text-xs text-white/40 mt-0.5 truncate">{n.content}</p>
+                                  
+                                  {/* Full text always visible */}
+                                  <p className="text-xs text-white/60 mt-1.5 whitespace-pre-wrap break-words leading-relaxed">
+                                    {n.content}
+                                  </p>
+                                  
+                                  {n.link && (
+                                    <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-blue-400 hover:text-blue-300">
+                                      <ExternalLink className="w-3.5 h-3.5" />
+                                      Ver mais
+                                    </div>
                                   )}
                                 </div>
                               </div>
                             </button>
-
-                            {/* Expanded content panel */}
-                            {isExpanded && (
-                              <div className="px-4 pb-4 pt-1 bg-white/[0.04]">
-                                <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">
-                                  {n.content}
-                                </p>
-                                {n.link && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); navigate(n.link!); }}
-                                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors"
-                                  >
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                    Ver mais
-                                  </button>
-                                )}
-                              </div>
-                            )}
                           </div>
                         );
                       })}
