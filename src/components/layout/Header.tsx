@@ -29,7 +29,7 @@ export const Header = () => {
   const { settings } = useSettings();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [unreadCount, setUnreadCount] = useState(0);
+
   useEffect(() => {
     if (!user) return;
 
