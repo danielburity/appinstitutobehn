@@ -758,18 +758,26 @@ export default function Admin() {
       // 2. Get all therapists
       const { data: allTherapists, error: therErr } = await supabase
         .from('therapists')
-        .select('name');
+        .select('id, name, avatar_url');
         
       if (therErr) throw therErr;
       
-      const therapistNames = new Set(allTherapists.map(t => t.name?.toLowerCase().trim()));
+      const therapistMap = new Map();
+      allTherapists.forEach(t => {
+         if (t.name) therapistMap.set(t.name.toLowerCase().trim(), t);
+      });
       
-      // 3. Insert missing ones
+      let updatedCount = 0;
+      
+      // 3. Insert missing ones OR update existing ones
       for (const profile of activeProfiles || []) {
         if (!profile.full_name) continue;
         const nameKey = profile.full_name.toLowerCase().trim();
         
-        if (!therapistNames.has(nameKey)) {
+        const existingTherapist = therapistMap.get(nameKey);
+        
+        if (!existingTherapist) {
+          // CREATE NEW
           const { error: insertErr } = await supabase.from('therapists').insert({
             name: profile.full_name,
             avatar_url: profile.avatar_url,
@@ -780,12 +788,22 @@ export default function Admin() {
           
           if (!insertErr) {
             count++;
-            therapistNames.add(nameKey);
+            therapistMap.set(nameKey, { name: profile.full_name, avatar_url: profile.avatar_url });
+          }
+        } else {
+          // UPDATE EXISTING Se a foto estiver diferente ou ausente
+          if (profile.avatar_url && existingTherapist.avatar_url !== profile.avatar_url) {
+             const { error: updateErr } = await supabase
+                .from('therapists')
+                .update({ avatar_url: profile.avatar_url })
+                .eq('id', existingTherapist.id);
+                
+             if (!updateErr) updatedCount++;
           }
         }
       }
       
-      toast.success('Sincronização Concluída!', { description: `${count} novos terapeutas adicionados com base nos alunos ativos.` });
+      toast.success('Sincronização Concluída!', { description: `${count} novos adicionados, ${updatedCount} fotos atualizadas.` });
       loadData();
     } catch (error: any) {
       toast.error('Erro na sincronização: ' + error.message);
