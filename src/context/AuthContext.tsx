@@ -22,6 +22,8 @@ interface AuthContextValue {
   profile: Profile | null;
   isAdmin: boolean;
   isMember: boolean;
+  hasCourses: boolean;
+  purchasedCourseIds: number[];
   loadingProfile: boolean;
   signIn(email: string, password: string): Promise<void>;
   signUp(email: string, password: string): Promise<void>;
@@ -36,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState<boolean>(false);
+  const [purchasedCourseIds, setPurchasedCourseIds] = useState<number[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -58,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function loadProfile() {
       if (!user) {
         setProfile(null);
+        setPurchasedCourseIds([]);
         setLoadingProfile(false);
         return;
       }
@@ -128,6 +132,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         }
       }
+
+      // Load purchased courses for this user
+      const { data: userCourses } = await supabase
+        .from('user_courses')
+        .select('course_id')
+        .eq('user_id', user.id);
+      if (userCourses && userCourses.length > 0) {
+        setPurchasedCourseIds(userCourses.map((uc: any) => uc.course_id));
+      } else {
+        setPurchasedCourseIds([]);
+      }
+
       setLoadingProfile(false);
     }
     loadProfile();
@@ -155,6 +171,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const hasCourses = purchasedCourseIds.length > 0;
+
   const value = useMemo<AuthContextValue>(() => ({
     user,
     session,
@@ -168,6 +186,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const isPremium = profile?.subscription_status === 'active';
       return byEnv || profile?.role === 'admin' || isPremium;
     })(),
+    hasCourses,
+    purchasedCourseIds,
     loadingProfile,
     async signIn(email, password) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -188,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     },
     refreshProfile,
-  }), [user, session, profile, loadingProfile]);
+  }), [user, session, profile, loadingProfile, hasCourses, purchasedCourseIds]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

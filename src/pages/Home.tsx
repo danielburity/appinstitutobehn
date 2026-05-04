@@ -12,9 +12,16 @@ import { useAuth } from "@/context/AuthContext";
 const Home = () => {
   const navigate = useNavigate();
   const { settings } = useSettings();
-  const { user, isMember, isAdmin } = useAuth();
+  const { user, isMember, isAdmin, hasCourses } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [events, setEvents] = useState<AppEvent[]>([]);
+
+  // Compradores de curso são redirecionados para /cursos
+  useEffect(() => {
+    if (!isMember && hasCourses) {
+      navigate('/cursos', { replace: true });
+    }
+  }, [isMember, hasCourses, navigate]);
 
   useEffect(() => {
     async function loadData() {

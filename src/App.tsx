@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import CoursePlayer from "./pages/CoursePlayer";
+import CourseCheckoutPage from "./pages/CourseCheckoutPage";
 import Therapists from "./pages/Therapists";
 import Events from "./pages/Events";
 import NotFound from "./pages/NotFound";
@@ -62,34 +63,98 @@ const RootApp = () => {
   return (
     <AuthProvider>
       <Routes>
-      {/* Rota Pública da Landing Page */}
+      {/* ═══════ Rotas Públicas (sem login) ═══════ */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/assinatura" element={<Subscription />} />
+      <Route path="/comprar/:slug" element={<CourseCheckoutPage />} />
 
-      {/* Rotas Protegidas com Layout de Dashboard */}
+      {/* ═══════ Rotas Plataforma Completa (só isMember) ═══════ */}
       <Route
-        path="/*"
+        path="/home"
         element={
           <ProtectedRoute requireMember>
             <Layout>
-              <Routes>
-                <Route path="/home" element={<Home />} />
-                <Route path="/cursos" element={<Courses />} />
-                <Route path="/curso/:id" element={<CourseDetail />} />
-                <Route path="/curso/:courseId/assistir" element={<CoursePlayer />} />
-                <Route path="/terapeutas" element={<Therapists />} />
-                <Route path="/eventos" element={<Events />} />
-                <Route path="/perfil" element={<Profile />} />
-                <Route path="/admin" element={<ProtectedRoute requireAdmin>{<Admin />}</ProtectedRoute>} />
-                <Route path="*" element={<Home />} />
-              </Routes>
+              <Home />
             </Layout>
           </ProtectedRoute>
         }
       />
-      <Route path="/assinatura" element={<Subscription />} />
+      <Route
+        path="/terapeutas"
+        element={
+          <ProtectedRoute requireMember>
+            <Layout>
+              <Therapists />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/eventos"
+        element={
+          <ProtectedRoute requireMember>
+            <Layout>
+              <Events />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requireAdmin>
+            <Layout>
+              <Admin />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ═══════ Rotas Parciais (isMember OU hasCourses) ═══════ */}
+      <Route
+        path="/cursos"
+        element={
+          <ProtectedRoute requireMemberOrCourses>
+            <Layout>
+              <Courses />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/curso/:id"
+        element={
+          <ProtectedRoute requireMemberOrCourses>
+            <Layout>
+              <CourseDetail />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/curso/:courseId/assistir"
+        element={
+          <ProtectedRoute requireMemberOrCourses>
+            <CoursePlayer />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/perfil"
+        element={
+          <ProtectedRoute requireMemberOrCourses>
+            <Layout>
+              <Profile />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Fallback: redireciona para home ou cursos */}
+      <Route path="*" element={<LandingPage />} />
     </Routes>
-  </AuthProvider>
+    </AuthProvider>
   );
 };
 

@@ -8,16 +8,55 @@ export default function ProtectedRoute({
   children,
   requireAdmin = false,
   requireMember = false,
+  requireMemberOrCourses = false,
 }: {
   children: ReactNode;
   requireAdmin?: boolean;
   requireMember?: boolean;
+  requireMemberOrCourses?: boolean;
 }) {
-  const { user, isAdmin, isMember, loadingProfile, profile, signOut } = useAuth();
+  const { user, isAdmin, isMember, hasCourses, loadingProfile, profile, signOut } = useAuth();
 
   if (loadingProfile) return null;
   if (!user) return <Navigate to="/login" replace />;
   if (requireAdmin && !isAdmin) return <Navigate to="/" replace />;
+
+  // Nível intermediário: aceita membros OU compradores de cursos individuais
+  if (requireMemberOrCourses && !isMember && !hasCourses) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center space-y-8 animate-in fade-in duration-700">
+        <div className="space-y-4 max-w-md">
+          <h2 className="text-3xl font-black text-primary uppercase tracking-tighter italic">Acesso Restrito</h2>
+          <p className="text-muted-foreground font-medium leading-relaxed">
+            Para acessar os cursos, você precisa comprar um curso individual ou assinar a plataforma completa.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 w-full max-w-xs">
+          <Button
+            onClick={() => window.location.href = '/assinatura'}
+            className="h-12 font-bold gradient-primary text-white"
+          >
+            Assinar Plataforma Completa
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => window.location.href = '/'}
+            className="h-12 font-bold"
+          >
+            Voltar para o Início
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => signOut()}
+            className="text-muted-foreground text-xs hover:text-destructive"
+          >
+            Sair desta conta / Entrar com outro e-mail
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (requireMember && !isMember) {
 

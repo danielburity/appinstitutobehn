@@ -25,7 +25,7 @@ interface Notification {
 export const Header = () => {
   const { setTheme, resolvedTheme } = useTheme();
   const navigate = useNavigate();
-  const { user, profile, isAdmin } = useAuth();
+  const { user, profile, isAdmin, isMember } = useAuth();
   const { settings } = useSettings();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -98,6 +98,14 @@ export const Header = () => {
 
   const toggleTheme = () => setTheme(resolvedTheme === "dark" ? "light" : "dark");
 
+  // Menu items filtrados por nível de acesso
+  const mobileMenuItems = [
+    ...(isMember ? [{ icon: Home, label: "Home", path: "/home" }] : []),
+    { icon: BookOpen, label: isMember ? "Cursos" : "Meus Cursos", path: "/cursos" },
+    ...(isMember ? [{ icon: Users, label: "Terapeutas", path: "/terapeutas" }] : []),
+    ...(isMember ? [{ icon: Calendar, label: "Eventos", path: "/eventos" }] : []),
+  ];
+
   return (
     <header className="sticky top-0 z-40 bg-sidebar text-sidebar-foreground transition-colors duration-300">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between border-b border-sidebar-foreground/10">
@@ -112,23 +120,19 @@ export const Header = () => {
             </PopoverTrigger>
             <PopoverContent className="w-56 p-2 bg-card text-card-foreground border-border" align="start" sideOffset={8}>
               <div className="flex flex-col gap-1">
-                <button onClick={() => navigate('/')} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm font-medium">
-                  <Home className="w-4 h-4" /> Home
-                </button>
-                <button onClick={() => navigate('/cursos')} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm font-medium">
-                  <BookOpen className="w-4 h-4" /> Cursos
-                </button>
-                <button onClick={() => navigate('/terapeutas')} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm font-medium">
-                  <Users className="w-4 h-4" /> Terapeutas
-                </button>
-                <button onClick={() => navigate('/eventos')} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm font-medium">
-                  <Calendar className="w-4 h-4" /> Eventos
-                </button>
+                {mobileMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button key={item.path} onClick={() => navigate(item.path)} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm font-medium">
+                      <Icon className="w-4 h-4" /> {item.label}
+                    </button>
+                  );
+                })}
               </div>
             </PopoverContent>
           </Popover>
 
-          <button onClick={() => navigate('/')} className="hover:opacity-80 transition-opacity flex items-center gap-2">
+          <button onClick={() => navigate(isMember ? '/home' : '/cursos')} className="hover:opacity-80 transition-opacity flex items-center gap-2">
             {settings.logoUrl ? (
               <img src={settings.logoUrl} alt={`${settings.appName} Logo`} className="h-12 max-h-[72px] w-auto max-w-[200px] object-contain object-left" />
             ) : (

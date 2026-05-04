@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Course } from "@/lib/types";
+import { UpgradeBanner } from "@/components/features/UpgradeBanner";
 
 const Courses = () => {
   const [filtroAtivo, setFiltroAtivo] = useState("Todos");
@@ -55,6 +56,9 @@ const Courses = () => {
           <Button className="mt-4" onClick={() => navigate('/admin')}>Gerenciar Cursos</Button>
         )}
       </div>
+
+      {/* Banner de Upgrade para compradores de curso */}
+      <UpgradeBanner />
 
       {/* Busca */}
       <div className="relative">
