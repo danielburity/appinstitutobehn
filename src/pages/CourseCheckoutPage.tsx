@@ -1,6 +1,6 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Clock, Star, Lock, CheckCircle, ShoppingCart, Shield, Zap } from "lucide-react";
+import { ArrowLeft, Clock, Star, Lock, CheckCircle, ShoppingCart, Shield, Zap, Users, Calendar, Award, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -12,6 +12,7 @@ import { useSettings } from "@/context/SettingsContext";
 export default function CourseCheckoutPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, isMember, isAdmin, purchasedCourseIds } = useAuth();
   const { settings } = useSettings();
   const [course, setCourse] = useState<any | null>(null);
@@ -30,8 +31,8 @@ export default function CourseCheckoutPage() {
         .single();
 
       if (data && !error) {
-        // Se o curso é Afiliados, redireciona para a assinatura
-        if (data.slug === 'afiliados-instituto-behn') {
+        // Se o curso é Afiliados/Afiliação, redireciona para a assinatura
+        if (data.slug === 'afiliados-instituto-behn' || data.slug === 'afiliacao-instituto-behn') {
           navigate('/assinatura', { replace: true });
           return;
         }
@@ -270,11 +271,8 @@ export default function CourseCheckoutPage() {
                   <Button
                     className="w-full h-14 text-lg font-bold rounded-xl gradient-primary shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
                     onClick={() => {
-                      // Set URL params for CheckoutForm
-                      const params = new URLSearchParams(window.location.search);
-                      params.set('course_id', course.id.toString());
-                      params.set('course_title', course.titulo);
-                      window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+                      // Use React Router's setSearchParams so CheckoutForm reads them correctly
+                      setSearchParams({ course_id: course.id.toString(), course_title: course.titulo });
                       setShowCheckout(true);
                     }}
                   >

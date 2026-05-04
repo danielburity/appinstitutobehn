@@ -58,7 +58,7 @@ export default function CoursePlayer() {
             grantAccess = true;
         } else if (!courseData.is_premium) {
             grantAccess = true;
-        } else if (courseData.slug === 'afiliados-instituto-behn' && isMember) {
+        } else if ((courseData.slug === 'afiliados-instituto-behn' || courseData.slug === 'afiliacao-instituto-behn') && isMember) {
             grantAccess = true;
         } else if (user) {
             const { data: uc, error: errUc } = await supabase

@@ -137,7 +137,7 @@ const CourseDetail = () => {
             grantAccess = true;
         } else if (!data.is_premium) {
             grantAccess = true;
-        } else if (data.slug === 'afiliados-instituto-behn' && isMember) {
+        } else if ((data.slug === 'afiliados-instituto-behn' || data.slug === 'afiliacao-instituto-behn') && isMember) {
             grantAccess = true;
         } else if (user) {
             // Verifica se o aluno logado "comprou" este curso específico (Pagar.me/Manualmente)
@@ -255,7 +255,7 @@ const CourseDetail = () => {
         >
           {course.progresso > 0 ? "Continuar Assistindo" : "Começar Curso"}
         </Button>
-      ) : course.slug === 'afiliados-instituto-behn' ? (
+      ) : (course.slug === 'afiliados-instituto-behn' || course.slug === 'afiliacao-instituto-behn') ? (
         <Button
           className="w-full md:w-auto bg-slate-800 text-white hover:bg-slate-700"
           size="lg"
