@@ -1,16 +1,61 @@
-import { useState, useRef } from "react";
+import { useState, useRef, Component } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Loader2, Save, User as UserIcon, LogOut } from "lucide-react";
+import { Camera, Loader2, Save, User as UserIcon, LogOut, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 
-const Profile = () => {
+// Error Boundary para capturar erros de renderização e evitar tela branca
+class ProfileErrorBoundary extends Component<
+    { children: React.ReactNode },
+    { hasError: boolean; error: Error | null }
+> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        console.error('[Profile] Erro de renderização:', error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="max-w-2xl mx-auto pt-10 pb-32 space-y-6 text-center animate-in fade-in duration-700">
+                    <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-8 space-y-4">
+                        <AlertTriangle className="w-12 h-12 text-destructive mx-auto" />
+                        <h2 className="text-xl font-bold text-foreground">Erro ao carregar perfil</h2>
+                        <p className="text-muted-foreground">
+                            Ocorreu um erro ao renderizar esta página. Isso pode acontecer por um problema temporário.
+                        </p>
+                        <Button
+                            onClick={() => {
+                                this.setState({ hasError: false, error: null });
+                                window.location.reload();
+                            }}
+                            className="bg-accent hover:bg-accent/90 text-white font-bold"
+                        >
+                            Tentar Novamente
+                        </Button>
+                    </div>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+const ProfileContent = () => {
     const { user, profile, refreshProfile, signOut } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -22,30 +67,36 @@ const Profile = () => {
         if (!user) return;
 
         setLoading(true);
-        const { error } = await supabase
-            .from("profiles")
-            .update({ full_name: fullName, avatar_url: avatarUrl })
-            .eq("id", user.id);
-            
-        // Sync the avatar to therapists table as well, matching by name since therapists has no ID relationship
-        if (profile?.full_name) {
-            await supabase
-                .from("therapists")
-                .update({ avatar_url: avatarUrl, name: fullName })
-                .eq("name", profile.full_name);
-        } else if (fullName) {
-            await supabase
-                .from("therapists")
-                .update({ avatar_url: avatarUrl, name: fullName })
-                .eq("name", fullName);
-        }
+        try {
+            const { error } = await supabase
+                .from("profiles")
+                .update({ full_name: fullName, avatar_url: avatarUrl })
+                .eq("id", user.id);
+                
+            // Sync the avatar to therapists table as well, matching by name since therapists has no ID relationship
+            if (profile?.full_name) {
+                await supabase
+                    .from("therapists")
+                    .update({ avatar_url: avatarUrl, name: fullName })
+                    .eq("name", profile.full_name);
+            } else if (fullName) {
+                await supabase
+                    .from("therapists")
+                    .update({ avatar_url: avatarUrl, name: fullName })
+                    .eq("name", fullName);
+            }
 
-        setLoading(false);
-        if (error) {
-            toast.error("Erro ao atualizar perfil: " + error.message);
-        } else {
-            await refreshProfile();
-            toast.success("Perfil atualizado com sucesso!");
+            if (error) {
+                toast.error("Erro ao atualizar perfil: " + error.message);
+            } else {
+                await refreshProfile();
+                toast.success("Perfil atualizado com sucesso!");
+            }
+        } catch (err: any) {
+            console.error('[Profile] Erro ao salvar:', err);
+            toast.error("Erro inesperado ao salvar perfil. Tente novamente.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -147,5 +198,11 @@ const Profile = () => {
         </div>
     );
 };
+
+const Profile = () => (
+    <ProfileErrorBoundary>
+        <ProfileContent />
+    </ProfileErrorBoundary>
+);
 
 export default Profile;

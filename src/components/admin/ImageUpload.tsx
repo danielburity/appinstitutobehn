@@ -17,13 +17,40 @@ interface ImageUploadProps {
 export function ImageUpload({ value, onChange, label, bucket = 'admin-assets', folder = 'general' }: ImageUploadProps) {
     const [uploading, setUploading] = useState(false);
 
+    // Extensões de imagem aceitas
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'avif'];
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
     async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
         if (!file) return;
 
         try {
             setUploading(true);
-            const fileExt = file.name.split('.').pop();
+
+            // Validação de tamanho
+            if (file.size > MAX_FILE_SIZE) {
+                const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+                toast.error(`Arquivo muito grande (${sizeMB}MB). O máximo é 5MB. Tente reduzir a resolução da foto.`);
+                return;
+            }
+
+            // Extrair e validar extensão
+            const nameParts = file.name.split('.');
+            let fileExt = nameParts.length > 1 ? nameParts.pop()!.toLowerCase().trim() : '';
+
+            // Rejeitar HEIC/HEIF (formato Apple que não é suportado)
+            if (['heic', 'heif'].includes(fileExt)) {
+                toast.error('Formato HEIC/HEIF não é suportado. Por favor, converta a foto para JPG ou PNG antes de enviar. No iPhone: Ajustes → Câmera → Formatos → Mais Compatível.');
+                return;
+            }
+
+            // Validar extensão
+            if (!fileExt || !ALLOWED_EXTENSIONS.includes(fileExt)) {
+                toast.error(`Formato de arquivo não suportado (.${fileExt || 'desconhecido'}). Use JPG, PNG ou WEBP.`);
+                return;
+            }
+
             const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
             const filePath = `${folder}/${fileName}`;
 
@@ -40,9 +67,12 @@ export function ImageUpload({ value, onChange, label, bucket = 'admin-assets', f
             onChange(publicUrl);
             toast.success('Imagem enviada com sucesso!');
         } catch (error: any) {
-            toast.error('Erro no envio: ' + error.message);
+            console.error('[ImageUpload] Erro:', error);
+            toast.error('Erro no envio: ' + (error.message || 'Tente novamente'));
         } finally {
             setUploading(false);
+            // Reset do input para permitir re-selecionar o mesmo arquivo
+            e.target.value = '';
         }
     }
 

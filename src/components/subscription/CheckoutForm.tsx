@@ -148,18 +148,59 @@ export const CheckoutForm = () => {
 
                 if (signUpError) {
                     if (signUpError.message.includes("already registered")) {
-                        console.log(`[CHECKOUT] E-mail já registrado. Tentando prosseguir com ID temporário de teste.`);
-                        userId = `test_existing_${Date.now()}`;
+                        console.log(`[CHECKOUT] E-mail já registrado. Tentando login automático...`);
+                        
+                        // Tenta login automático com as credenciais fornecidas
+                        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                            email: data.email,
+                            password: data.password,
+                        });
+
+                        if (!signInError && signInData?.user?.id) {
+                            userId = signInData.user.id;
+                            console.log(`[CHECKOUT] Login automático OK! User ID: ${userId}`);
+                            toast.success("Conta encontrada! Processando pagamento...");
+                        } else {
+                            // Login falhou (senha errada, etc) — busca o perfil pelo email
+                            console.log(`[CHECKOUT] Login automático falhou. Buscando perfil pelo email...`);
+                            const { data: profileData } = await supabase
+                                .from('profiles')
+                                .select('id')
+                                .eq('email', data.email.toLowerCase())
+                                .single();
+
+                            if (profileData?.id) {
+                                userId = profileData.id;
+                                console.log(`[CHECKOUT] Perfil encontrado pelo email! User ID: ${userId}`);
+                            } else {
+                                // Último recurso: envia null para o webhook buscar pelo email
+                                userId = null;
+                                console.warn(`[CHECKOUT] Perfil não encontrado. Webhook usará fallback por email.`);
+                            }
+                            toast.info("Conta existente detectada. Processando pagamento...");
+                        }
                     } else if (signUpError.message.includes("rate limit") || signUpError.status === 429) {
-                        toast.warning("Limite de contas atingido. Usando ID temporário para gerar link...");
-                        userId = `test_ratelimit_${Date.now()}`;
+                        // Rate limit: busca perfil pelo email antes de desistir
+                        console.log(`[CHECKOUT] Rate limit. Buscando perfil pelo email...`);
+                        const { data: profileData } = await supabase
+                            .from('profiles')
+                            .select('id')
+                            .eq('email', data.email.toLowerCase())
+                            .single();
+
+                        if (profileData?.id) {
+                            userId = profileData.id;
+                        } else {
+                            userId = null; // Webhook buscará pelo email
+                        }
+                        toast.warning("Limite temporário atingido. Gerando link de pagamento...");
                     } else {
                         throw new Error(`Erro ao criar conta: ${signUpError.message}`);
                     }
                 } else {
                     userId = signUpData.user?.id;
 
-                    // --- NOVA LÓGICA: AUTO-CADASTRO COMO TERAPEUTA ---
+                    // --- AUTO-CADASTRO COMO TERAPEUTA ---
                     if (userId) {
                         console.log(`[CHECKOUT] Criando registro de terapeuta para: ${userId}`);
                         try {
@@ -174,7 +215,6 @@ export const CheckoutForm = () => {
 
                             if (therapistError) {
                                 console.error("[CHECKOUT] Erro ao criar terapeuta:", therapistError);
-                                // Não trava o fluxo se falhar o registro de terapeuta
                             } else {
                                 console.log("[CHECKOUT] Registro de terapeuta criado com sucesso!");
                             }
