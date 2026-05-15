@@ -117,9 +117,7 @@ export default function RecurringCheckoutPage() {
 
             <CardHeader className="text-center pt-10">
               <CardTitle className="text-2xl font-bold">Plano Mensal</CardTitle>
-              <CardDescription className="text-primary font-medium tracking-wide">
-                RECORRENTE • SEM PRAZO
-              </CardDescription>
+
               <div className="mt-6 flex flex-col items-center">
                 <span className="text-5xl font-black">R$ 150</span>
                 <span className="text-muted-foreground text-sm font-medium mt-1">
