@@ -12,6 +12,7 @@ import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import CoursePlayer from "./pages/CoursePlayer";
 import CourseCheckoutPage from "./pages/CourseCheckoutPage";
+import CardPage from "./pages/CardPage";
 import Therapists from "./pages/Therapists";
 import Events from "./pages/Events";
 import NotFound from "./pages/NotFound";
@@ -68,6 +69,7 @@ const RootApp = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/assinatura" element={<Subscription />} />
       <Route path="/comprar/:slug" element={<CourseCheckoutPage />} />
+      <Route path="/card" element={<CardPage />} />
 
       {/* ═══════ Rotas Plataforma Completa (só isMember) ═══════ */}
       <Route

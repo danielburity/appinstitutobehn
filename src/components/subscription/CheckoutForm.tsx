@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useSettings } from "@/context/SettingsContext";
 import { useAuth } from "@/context/AuthContext";
+import { TermsModal } from "./TermsModal";
 
 const checkoutSchema = z.object({
     name: z.string().min(3, "Nome muito curto"),
@@ -38,6 +39,7 @@ export const CheckoutForm = () => {
     const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
     const [listeningUserId, setListeningUserId] = useState<string | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<'annual' | 'monthly'>('annual');
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
     const { settings } = useSettings();
     const [searchParams] = useSearchParams();
     const { user } = useAuth();
@@ -125,6 +127,12 @@ export const CheckoutForm = () => {
     });
 
     const onSubmit = async (data: CheckoutData) => {
+        // ── Validação de Termos Obrigatória ──
+        if (!acceptedTerms) {
+            toast.error("Você precisa aceitar os termos e condições para prosseguir.");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             console.log(`[CHECKOUT] Iniciando fluxo unificado...`);
@@ -415,9 +423,18 @@ export const CheckoutForm = () => {
                 )}
             </div>
 
+            {/* ── Termos de Aceite Obrigatórios ── */}
+            <div className="pt-4 border-t border-border/30">
+                <TermsModal
+                    type={courseId ? 'course' : 'affiliate'}
+                    accepted={acceptedTerms}
+                    onAcceptChange={setAcceptedTerms}
+                />
+            </div>
+
             <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !acceptedTerms}
                 className="w-full h-16 text-lg font-black rounded-2xl gradient-primary mt-8 shadow-xl hover:shadow-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
             >
                 {isSubmitting ? (

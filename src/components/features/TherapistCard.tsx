@@ -1,24 +1,37 @@
-import { MessageCircle, Star, MapPin } from "lucide-react";
+import { MessageCircle, Star, MapPin, Camera } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Therapist } from "@/lib/types";
 
 interface TherapistCardProps {
   therapist: Therapist;
+  isOwnProfile?: boolean;
+  onEditPhoto?: () => void;
 }
 
-export const TherapistCard = ({ therapist }: TherapistCardProps) => {
+export const TherapistCard = ({ therapist, isOwnProfile, onEditPhoto }: TherapistCardProps) => {
   // Generate a fallback avatar if needed, ensuring it looks nice
   const avatarUrl = therapist.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${therapist.id}&mouth=smile&eyebrows=default`;
 
   return (
     <div className="bg-card rounded-xl p-4 sm:p-6 shadow-md hover:shadow-xl transition-smooth border border-border">
       <div className="flex flex-col sm:flex-row gap-4">
-        <img
-          src={avatarUrl}
-          alt={therapist.name}
-          className="w-20 h-20 rounded-full object-cover flex-shrink-0 mx-auto sm:mx-0"
-        />
+        <div className="relative flex-shrink-0 mx-auto sm:mx-0">
+          <img
+            src={avatarUrl}
+            alt={therapist.name}
+            className="w-20 h-20 rounded-full object-cover"
+          />
+          {isOwnProfile && onEditPhoto && (
+            <button
+              onClick={onEditPhoto}
+              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-accent text-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform active:scale-95 border-2 border-card"
+              title="Alterar minha foto"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
+          )}
+        </div>
 
         <div className="flex-1 space-y-3 min-w-0">
           <div>

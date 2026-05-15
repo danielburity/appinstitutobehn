@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, Camera, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TherapistCard } from "@/components/features/TherapistCard";
 import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Therapist } from "@/lib/types";
+import { useAuth } from "@/context/AuthContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ImageUpload } from "@/components/admin/ImageUpload";
+import { toast } from "sonner";
 
 const Therapists = () => {
   const [estado, setEstado] = useState("");
@@ -17,30 +21,37 @@ const Therapists = () => {
   const [availableStates, setAvailableStates] = useState<string[]>([]);
   const [availableSpecialties, setAvailableSpecialties] = useState<string[]>([]);
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("therapists")
-        .select("*")
-        .order("updated_at", { ascending: false });
+  // Photo edit state
+  const { profile, isAdmin, refreshProfile } = useAuth();
+  const [editingTherapist, setEditingTherapist] = useState<Therapist | null>(null);
+  const [newAvatarUrl, setNewAvatarUrl] = useState("");
+  const [savingPhoto, setSavingPhoto] = useState(false);
 
-      if (data) {
-        setTherapists(data as Therapist[]);
+  async function loadTherapists() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("therapists")
+      .select("*")
+      .order("updated_at", { ascending: false });
 
-        // Extract unique states and specialties for filters
-        const states = Array.from(new Set(data.map(t => t.state).filter(Boolean))) as string[];
-        setAvailableStates(states.sort());
+    if (data) {
+      setTherapists(data as Therapist[]);
 
-        const specs = new Set<string>();
-        data.forEach(t => {
-          t.specialties?.forEach((s: string) => specs.add(s));
-        });
-        setAvailableSpecialties(Array.from(specs).sort());
-      }
-      setLoading(false);
+      // Extract unique states and specialties for filters
+      const states = Array.from(new Set(data.map(t => t.state).filter(Boolean))) as string[];
+      setAvailableStates(states.sort());
+
+      const specs = new Set<string>();
+      data.forEach(t => {
+        t.specialties?.forEach((s: string) => specs.add(s));
+      });
+      setAvailableSpecialties(Array.from(specs).sort());
     }
-    load();
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadTherapists();
   }, []);
 
   const filteredData = useMemo(() => {
@@ -62,9 +73,81 @@ const Therapists = () => {
       );
   }, [estado, especialidade, query, therapists]);
 
+  // Check if a therapist belongs to the current user
+  const isOwnTherapist = (t: Therapist) => {
+    if (!profile?.full_name) return false;
+    return t.name.toLowerCase().trim() === profile.full_name.toLowerCase().trim();
+  };
+
+  // Can edit: own profile OR admin
+  const canEditPhoto = (t: Therapist) => {
+    return isOwnTherapist(t) || isAdmin;
+  };
+
+  const handleOpenPhotoEdit = (t: Therapist) => {
+    setEditingTherapist(t);
+    setNewAvatarUrl(t.avatar_url || "");
+  };
+
+  const handleSavePhoto = async () => {
+    if (!editingTherapist) return;
+    setSavingPhoto(true);
+
+    try {
+      // 1. Update the therapists table
+      const { error: therapistErr } = await supabase
+        .from("therapists")
+        .update({ avatar_url: newAvatarUrl?.trim() || null })
+        .eq("id", editingTherapist.id);
+
+      if (therapistErr) throw therapistErr;
+
+      // 2. If it's the current user's own profile, update profiles too
+      if (isOwnTherapist(editingTherapist) && profile) {
+        await supabase
+          .from("profiles")
+          .update({ avatar_url: newAvatarUrl?.trim() || null })
+          .eq("id", profile.id);
+        await refreshProfile();
+      }
+
+      // 3. If admin is editing someone else, try to find and update their profile by name
+      if (isAdmin && !isOwnTherapist(editingTherapist)) {
+        const { data: matchedProfiles } = await supabase
+          .from("profiles")
+          .select("id")
+          .ilike("full_name", editingTherapist.name)
+          .limit(1);
+
+        if (matchedProfiles && matchedProfiles.length > 0) {
+          await supabase
+            .from("profiles")
+            .update({ avatar_url: newAvatarUrl?.trim() || null })
+            .eq("id", matchedProfiles[0].id);
+        }
+      }
+
+      toast.success("Foto atualizada com sucesso!");
+      setEditingTherapist(null);
+      await loadTherapists();
+    } catch (err: any) {
+      console.error("[Therapists] Erro ao salvar foto:", err);
+      toast.error("Erro ao salvar foto: " + (err.message || "Tente novamente"));
+    } finally {
+      setSavingPhoto(false);
+    }
+  };
+
   const therapistCards = useMemo(() => {
-    return filteredData.map((t) => <TherapistCard key={t.id} therapist={t} />);
-  }, [filteredData]);
+    return filteredData.map((t) => (
+      <TherapistCard
+        key={t.id}
+        therapist={t}
+        isOwnProfile={canEditPhoto(t)}
+        onEditPhoto={() => handleOpenPhotoEdit(t)}
+      />
+    ));
+  }, [filteredData, profile, isAdmin]);
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">
@@ -140,6 +223,49 @@ const Therapists = () => {
           )}
         </div>
       </div>
+
+      {/* ─── Dialog de edição de foto ─── */}
+      <Dialog open={!!editingTherapist} onOpenChange={(open) => !open && setEditingTherapist(null)}>
+        <DialogContent className="max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Camera className="w-5 h-5 text-primary" />
+              Alterar Foto — {editingTherapist?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            <ImageUpload
+              label="Nova Foto de Perfil"
+              value={newAvatarUrl}
+              onChange={setNewAvatarUrl}
+              folder="avatars"
+              bucket="avatars"
+            />
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setEditingTherapist(null)}
+                disabled={savingPhoto}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 gradient-primary text-white font-bold"
+                onClick={handleSavePhoto}
+                disabled={savingPhoto}
+              >
+                {savingPhoto ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                {savingPhoto ? "Salvando..." : "Salvar Foto"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

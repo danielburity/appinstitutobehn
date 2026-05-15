@@ -130,6 +130,30 @@ serve(async (req: Request) => {
             return new Response(JSON.stringify({ error: insertError.message }), { status: 500 });
           }
           console.log(`[WEBHOOK] [OK] Usuário ${finalUserId} matriculado com sucesso no curso ${courseId}.`);
+
+          // ── Enviar termos do curso por e-mail ──
+          try {
+            const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+            const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+            const courseTitle = metadata.course_title || 'Curso Instituto Behn'
+            await fetch(`${supabaseUrl}/functions/v1/send-terms-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${serviceKey}`
+              },
+              body: JSON.stringify({
+                email: customerEmail,
+                full_name: metadata.customer_name || null,
+                terms_type: 'course',
+                course_title: courseTitle
+              })
+            })
+            console.log(`[WEBHOOK] [EMAIL] Termos do curso enviados para ${customerEmail}`);
+          } catch (emailErr) {
+            console.error(`[WEBHOOK] [EMAIL] Falha ao enviar termos:`, emailErr)
+          }
+
           return new Response(JSON.stringify({ message: 'Course Sale Success', user_id: finalUserId, course_id: courseId }), { status: 200 });
         }
       }
@@ -151,6 +175,29 @@ serve(async (req: Request) => {
       }
 
       console.log(`[WEBHOOK] [OK] Usuário ${finalUserId} ativado com sucesso.`, updateData)
+
+      // ── Enviar termos de afiliação por e-mail ──
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        await fetch(`${supabaseUrl}/functions/v1/send-terms-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`
+          },
+          body: JSON.stringify({
+            email: customerEmail,
+            full_name: metadata.customer_name || null,
+            terms_type: 'affiliate',
+            course_title: null
+          })
+        })
+        console.log(`[WEBHOOK] [EMAIL] Termos de afiliação enviados para ${customerEmail}`);
+      } catch (emailErr) {
+        console.error(`[WEBHOOK] [EMAIL] Falha ao enviar termos:`, emailErr)
+      }
+
       return new Response(JSON.stringify({ message: 'Success', user_id: finalUserId }), { status: 200 })
     }
 
