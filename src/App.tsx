@@ -13,6 +13,7 @@ import CourseDetail from "./pages/CourseDetail";
 import CoursePlayer from "./pages/CoursePlayer";
 import CourseCheckoutPage from "./pages/CourseCheckoutPage";
 import CardPage from "./pages/CardPage";
+import RecurringCheckoutPage from "./pages/RecurringCheckoutPage";
 import Therapists from "./pages/Therapists";
 import Events from "./pages/Events";
 import NotFound from "./pages/NotFound";
@@ -71,6 +72,7 @@ const RootApp = () => {
       <Route path="/comprar/:slug" element={<CourseCheckoutPage />} />
       <Route path="/card" element={<CardPage />} />
       <Route path="/cards" element={<CardPage />} />
+      <Route path="/assinar/recorrente" element={<RecurringCheckoutPage />} />
 
       {/* ═══════ Rotas Plataforma Completa (só isMember) ═══════ */}
       <Route

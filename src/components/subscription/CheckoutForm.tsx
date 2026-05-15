@@ -32,13 +32,13 @@ const buildInstallments = (maxInstallments: number, totalAmount: number) =>
         total: totalAmount
     }));
 
-export const CheckoutForm = () => {
+export const CheckoutForm = ({ forceMonthly = false }: { forceMonthly?: boolean }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [step, setStep] = useState(1);
     const [isCheckingPayment, setIsCheckingPayment] = useState(false);
     const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
     const [listeningUserId, setListeningUserId] = useState<string | null>(null);
-    const [paymentMethod, setPaymentMethod] = useState<'annual' | 'monthly'>('annual');
+    const [paymentMethod, setPaymentMethod] = useState<'annual' | 'monthly'>(forceMonthly ? 'monthly' : 'annual');
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const { settings } = useSettings();
     const [searchParams] = useSearchParams();
@@ -386,7 +386,7 @@ export const CheckoutForm = () => {
                     {errors.password && <p className="text-xs text-destructive font-black px-1">{errors.password.message}</p>}
                 </div>
 
-                {!courseId && (
+                {!courseId && !forceMonthly && (
                     <div className="pt-4 space-y-3">
                         <Label className="text-xs font-black uppercase tracking-widest text-primary/60">Opção de Pagamento</Label>
                         <div className="grid grid-cols-1 gap-3">
