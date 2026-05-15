@@ -70,6 +70,7 @@ const RootApp = () => {
       <Route path="/assinatura" element={<Subscription />} />
       <Route path="/comprar/:slug" element={<CourseCheckoutPage />} />
       <Route path="/card" element={<CardPage />} />
+      <Route path="/cards" element={<CardPage />} />
 
       {/* ═══════ Rotas Plataforma Completa (só isMember) ═══════ */}
       <Route
