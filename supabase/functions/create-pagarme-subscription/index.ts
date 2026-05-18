@@ -100,25 +100,16 @@ serve(async (req: Request) => {
 
         // --- LÓGICA DE ASSINATURA RECORRENTE (MODO SUBSCRIPTION) ---
         if (payment_type === "subscription") {
-            const effectivePrice = recurring_price || 15000
-            console.log(`[DEBUG] Criando ASSINATURA RECORRENTE: Plan: ${plan_id} | User: ${user_id} | Preço: ${effectivePrice}`)
+            // Plano dedicado de R$150/mês para link recorrente privado
+            const RECURRING_150_PLAN_ID = "plan_7ZmvJaKCns9v8ayb"
             
-            if (!recurring_price && (!plan_id || plan_id === "" || plan_id === "Ainda não gerado")) {
-                throw new Error("ID do plano mensal não configurado ou inválido. Por favor, gere o plano no Painel Admin antes de prosseguir.")
-            }
+            const effectivePlanId = recurring_price ? RECURRING_150_PLAN_ID : plan_id
+            const effectivePrice = recurring_price || 15000
 
-            // Quando recurring_price é informado, NÃO usa plan_id para evitar que o Pagar.me
-            // sobrescreva o preço com o valor padrão do plano.
-            const recurrence: any = {
-                interval: "month",
-                interval_count: 1,
-                pricing_scheme: {
-                    scheme_type: "unit",
-                    price: effectivePrice
-                }
-            }
-            if (!recurring_price && plan_id) {
-                recurrence.plan_id = plan_id
+            console.log(`[DEBUG] Criando ASSINATURA RECORRENTE: Plan: ${effectivePlanId} | User: ${user_id} | Preço: ${effectivePrice}`)
+            
+            if (!effectivePlanId || effectivePlanId === "" || effectivePlanId === "Ainda não gerado") {
+                throw new Error("ID do plano mensal não configurado ou inválido. Por favor, gere o plano no Painel Admin antes de prosseguir.")
             }
 
             const paymentLinkPayload = {
@@ -132,7 +123,17 @@ serve(async (req: Request) => {
                     }
                 },
                 cart_settings: {
-                    recurrences: [recurrence]
+                    recurrences: [
+                        {
+                            interval: "month",
+                            interval_count: 1,
+                            pricing_scheme: {
+                                scheme_type: "unit",
+                                price: effectivePrice
+                            },
+                            plan_id: effectivePlanId
+                        }
+                    ]
                 },
                 metadata: {
                     user_id: user_id,
