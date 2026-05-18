@@ -253,6 +253,7 @@ export const CheckoutForm = ({ forceMonthly = false }: { forceMonthly?: boolean 
                         ? "course_trainer" 
                         : (paymentMethod === 'monthly' ? settings.subscriptionMonthlyPlanId : "plan_R5oAGgCBKfvYANlr"),
                     payment_type: courseId ? "order" : (paymentMethod === 'monthly' ? "subscription" : "order"),
+                    recurring_price: forceMonthly ? 15000 : undefined,
                     course_id: courseId || null,
                     course_title: courseTitle || null,
                     installments: paymentMethod === 'monthly' ? 1 : maxInstallments,

@@ -30,7 +30,6 @@ const FEATURED_SLUGS = [
   "regressao",
   "reprogramando-o-amor",
   "roteiros-metaforicos",
-  "trainer-hnv",
 ];
 
 export default function CardPage() {

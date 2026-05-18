@@ -30,7 +30,8 @@ serve(async (req: Request) => {
             course_id, 
             course_title, 
             installments,
-            payment_type = "order" 
+            payment_type = "order",
+            recurring_price
         } = body
 
         // Number of installments chosen by the user (1 to maxInstallments)
@@ -99,15 +100,30 @@ serve(async (req: Request) => {
 
         // --- LÓGICA DE ASSINATURA RECORRENTE (MODO SUBSCRIPTION) ---
         if (payment_type === "subscription") {
-            console.log(`[DEBUG] Criando ASSINATURA RECORRENTE: Plan: ${plan_id} | User: ${user_id}`)
+            const effectivePrice = recurring_price || 15000
+            console.log(`[DEBUG] Criando ASSINATURA RECORRENTE: Plan: ${plan_id} | User: ${user_id} | Preço: ${effectivePrice}`)
             
-            if (!plan_id || plan_id === "" || plan_id === "Ainda não gerado") {
+            if (!recurring_price && (!plan_id || plan_id === "" || plan_id === "Ainda não gerado")) {
                 throw new Error("ID do plano mensal não configurado ou inválido. Por favor, gere o plano no Painel Admin antes de prosseguir.")
+            }
+
+            // Quando recurring_price é informado, NÃO usa plan_id para evitar que o Pagar.me
+            // sobrescreva o preço com o valor padrão do plano.
+            const recurrence: any = {
+                interval: "month",
+                interval_count: 1,
+                pricing_scheme: {
+                    scheme_type: "unit",
+                    price: effectivePrice
+                }
+            }
+            if (!recurring_price && plan_id) {
+                recurrence.plan_id = plan_id
             }
 
             const paymentLinkPayload = {
                 type: "subscription",
-                name: "Assinatura Mensal Premium",
+                name: recurring_price ? "Assinatura Mensal Recorrente" : "Assinatura Mensal Premium",
                 customer: cleanCustomer,
                 payment_settings: {
                     accepted_payment_methods: ["credit_card"],
@@ -116,17 +132,7 @@ serve(async (req: Request) => {
                     }
                 },
                 cart_settings: {
-                    recurrences: [
-                        {
-                            interval: "month",
-                            interval_count: 1,
-                            pricing_scheme: {
-                                scheme_type: "unit",
-                                price: 15000
-                            },
-                            plan_id: plan_id
-                        }
-                    ]
+                    recurrences: [recurrence]
                 },
                 metadata: {
                     user_id: user_id,
