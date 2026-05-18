@@ -225,7 +225,7 @@ export default function CardPage() {
             Quer acesso a <span className="text-primary italic">tudo</span>?
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto">
-            Assine a plataforma completa e desbloqueie todos os cursos, vitrine de terapeutas, eventos exclusivos e muito mais.
+            Assine a plataforma completa e desbloqueie o curso Afiliados Behn, vitrine de terapeutas, eventos exclusivos e muito mais.
           </p>
           <Button
             size="lg"
